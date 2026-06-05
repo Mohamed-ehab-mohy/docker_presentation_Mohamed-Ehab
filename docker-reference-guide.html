@@ -1,0 +1,1198 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Docker — دليل الأوامر الشامل</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #0b0f1a;
+    --surface:   #111827;
+    --card:      #1a2235;
+    --border:    #1f2d45;
+    --green:     #22d3a0;
+    --blue:      #38bdf8;
+    --orange:    #fb923c;
+    --purple:    #a78bfa;
+    --yellow:    #fbbf24;
+    --red:       #f87171;
+    --text:      #e2e8f0;
+    --muted:     #94a3b8;
+    --code-bg:   #0d1a2d;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans Arabic', sans-serif;
+    font-size: 17px;
+    line-height: 1.75;
+    min-height: 100vh;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(11,15,26,.97);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 1.5rem;
+    display: flex; align-items: center; gap: .25rem;
+    height: 60px; overflow-x: auto; white-space: nowrap;
+  }
+  nav::-webkit-scrollbar { height: 0; }
+  nav .logo {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--blue); font-size: .88rem; font-weight: 700;
+    letter-spacing: .06em; flex-shrink: 0; margin-left: auto;
+    padding: .35rem .85rem;
+    background: rgba(56,189,248,.08);
+    border: 1px solid rgba(56,189,248,.2);
+    border-radius: 8px;
+    display: flex; align-items: center; gap: .5rem;
+  }
+  nav a {
+    color: var(--muted); text-decoration: none;
+    font-size: .78rem; font-weight: 500;
+    transition: color .15s, background .15s, border-color .15s;
+    flex-shrink: 0;
+    padding: .35rem .75rem;
+    border-radius: 7px;
+    border: 1px solid transparent;
+    display: flex; align-items: center; gap: .35rem;
+    font-family: 'IBM Plex Sans Arabic', sans-serif;
+  }
+  nav a:hover { color: var(--text); background: rgba(255,255,255,.05); border-color: var(--border); }
+  nav a.active { color: var(--blue); background: rgba(56,189,248,.1); border-color: rgba(56,189,248,.25); }
+  nav a .nav-num { font-family: 'JetBrains Mono', monospace; font-size: .65rem; font-weight: 700; color: var(--blue); opacity: .7; }
+
+  /* ── HERO ── */
+  .hero { padding: 5rem 2rem 3rem; max-width: 960px; margin: 0 auto; text-align: center; }
+  .hero .badge {
+    display: inline-block;
+    background: rgba(56,189,248,.12); border: 1px solid rgba(56,189,248,.3);
+    color: var(--blue); font-family: 'JetBrains Mono', monospace;
+    font-size: .75rem; padding: .35rem .9rem;
+    border-radius: 999px; margin-bottom: 1.5rem; letter-spacing: .08em;
+  }
+  .hero h1 {
+    font-size: clamp(2.2rem, 5vw, 3.4rem);
+    font-weight: 700; line-height: 1.2; margin-bottom: 1rem;
+    background: linear-gradient(135deg, #e2e8f0 30%, #38bdf8);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .hero p { color: var(--muted); font-size: 1.05rem; max-width: 600px; margin: 0 auto; }
+  .pill-row { display: flex; flex-wrap: wrap; gap: .6rem; justify-content: center; margin-top: 1.5rem; }
+  .pill {
+    background: var(--card); border: 1px solid var(--border);
+    color: var(--muted); font-size: .8rem;
+    padding: .3rem .85rem; border-radius: 999px;
+  }
+
+  /* ── LAYOUT ── */
+  .content { max-width: 960px; margin: 0 auto; padding: 0 2rem 6rem; }
+  .section { margin-bottom: 5rem; scroll-margin-top: 70px; }
+  .section-title {
+    display: flex; align-items: center; gap: .75rem;
+    font-size: 1.5rem; font-weight: 700;
+    margin-bottom: 1.5rem; padding-bottom: .75rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-title .num {
+    font-family: 'JetBrains Mono', monospace; font-size: .85rem;
+    color: var(--blue); background: rgba(56,189,248,.1); border: 1px solid rgba(56,189,248,.25);
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 8px; flex-shrink: 0;
+  }
+
+  /* ── CMD CARD ── */
+  .cmd-list { display: flex; flex-direction: column; gap: .6rem; }
+  .cmd-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; overflow: hidden;
+  }
+  .cmd-card-header {
+    display: grid; grid-template-columns: 1fr auto;
+    gap: .5rem 1rem; align-items: start;
+    padding: .9rem 1.25rem .75rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .cmd-card-header h4 {
+    font-family: 'IBM Plex Sans Arabic', sans-serif;
+    font-size: .92rem; font-weight: 600; color: var(--text);
+  }
+  .cmd-card-header p { font-size: .82rem; color: var(--muted); margin-top: .15rem; }
+  .cmd-tag {
+    font-family: 'JetBrains Mono', monospace; font-size: .72rem; font-weight: 700;
+    padding: .2rem .6rem; border-radius: 6px; white-space: nowrap; align-self: start;
+  }
+  .cmd-tag.blue   { background: rgba(56,189,248,.12);  color: var(--blue);   border: 1px solid rgba(56,189,248,.25); }
+  .cmd-tag.green  { background: rgba(34,211,160,.12);  color: var(--green);  border: 1px solid rgba(34,211,160,.25); }
+  .cmd-tag.orange { background: rgba(251,146,60,.12);  color: var(--orange); border: 1px solid rgba(251,146,60,.25); }
+  .cmd-tag.purple { background: rgba(167,139,250,.12); color: var(--purple); border: 1px solid rgba(167,139,250,.25); }
+  .cmd-tag.yellow { background: rgba(251,191,36,.12);  color: var(--yellow); border: 1px solid rgba(251,191,36,.25); }
+  .cmd-tag.red    { background: rgba(248,113,113,.12); color: var(--red);    border: 1px solid rgba(248,113,113,.25); }
+
+  .cmd-body { padding: 0; }
+  pre.cmd-code {
+    background: var(--code-bg);
+    font-family: 'JetBrains Mono', monospace; font-size: .84rem;
+    color: var(--green); padding: .9rem 1.25rem;
+    overflow-x: auto; direction: ltr; text-align: left; line-height: 1.85;
+    white-space: pre; margin: 0; border: none; border-radius: 0;
+  }
+  pre.cmd-code .cm { color: var(--muted); }
+  pre.cmd-code .ck { color: var(--blue); }
+  pre.cmd-code .cy { color: var(--yellow); }
+  pre.cmd-code .cr { color: var(--red); }
+  pre.cmd-code .cp { color: var(--purple); }
+  pre.cmd-code .co { color: var(--orange); }
+
+  .cmd-flags { padding: .75rem 1.25rem; display: flex; flex-direction: column; gap: .4rem; border-top: 1px solid var(--border); }
+  .flag-row { display: grid; grid-template-columns: auto 1fr; gap: .6rem 1rem; align-items: start; }
+  .flag-name {
+    font-family: 'JetBrains Mono', monospace; font-size: .78rem; font-weight: 600;
+    color: var(--yellow); background: rgba(251,191,36,.08); border: 1px solid rgba(251,191,36,.18);
+    padding: .15rem .55rem; border-radius: 5px; white-space: nowrap; align-self: start; margin-top: .05rem;
+  }
+  .flag-desc { font-size: .82rem; color: var(--muted); }
+
+  /* ── INFO BOXES ── */
+  .info-box {
+    border-radius: 12px; padding: 1rem 1.25rem;
+    display: flex; gap: .85rem; align-items: flex-start; margin: 1rem 0;
+  }
+  .info-box.blue   { background: rgba(56,189,248,.07);  border: 1px solid rgba(56,189,248,.25); }
+  .info-box.orange { background: rgba(251,146,60,.07);  border: 1px solid rgba(251,146,60,.25); }
+  .info-box.green  { background: rgba(34,211,160,.07);  border: 1px solid rgba(34,211,160,.25); }
+  .info-box.purple { background: rgba(167,139,250,.07); border: 1px solid rgba(167,139,250,.25); }
+  .info-box.yellow { background: rgba(251,191,36,.07);  border: 1px solid rgba(251,191,36,.25); }
+  .info-box.red    { background: rgba(248,113,113,.07); border: 1px solid rgba(248,113,113,.25); }
+  .info-box .ib-icon { font-size: 1.25rem; flex-shrink: 0; line-height: 1.4; }
+  .info-box p { font-size: .92rem; color: var(--text); }
+
+  /* ── QUOTE ── */
+  .quote-box {
+    background: var(--card); border: 1px solid var(--border);
+    border-right: 4px solid var(--yellow);
+    border-radius: 0 12px 12px 0;
+    padding: 1.25rem 1.5rem; margin: 1.5rem 0;
+    font-size: .95rem; color: var(--text); line-height: 1.8;
+  }
+  .quote-box strong { color: var(--yellow); }
+  .quote-box code { font-family: 'JetBrains Mono', monospace; color: var(--green); font-size: .85rem; }
+
+  /* ── CHEATSHEET TABLE ── */
+  .quick-table { width: 100%; border-collapse: collapse; font-size: .88rem; margin-top: 1rem; }
+  .quick-table th {
+    background: var(--surface); border: 1px solid var(--border);
+    padding: .6rem 1rem; color: var(--muted);
+    font-weight: 600; font-size: .8rem; text-align: right;
+  }
+  .quick-table td {
+    background: var(--card); border: 1px solid var(--border);
+    padding: .65rem 1rem; color: var(--muted); vertical-align: top;
+  }
+  .quick-table td:first-child { font-family: 'JetBrains Mono', monospace; color: var(--green); direction: ltr; text-align: left; }
+  .quick-table tr:hover td { background: #1f2d45; }
+
+  /* ── DIVIDER ── */
+  .section-divider {
+    font-family: 'JetBrains Mono', monospace; font-size: .72rem;
+    color: var(--muted); letter-spacing: .1em; text-align: center;
+    padding: .5rem 0; margin-bottom: 1rem;
+    opacity: .5;
+  }
+
+  /* ── DUAL GRID ── */
+  .dual-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; }
+  .dual-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; }
+  .dual-card h3 { font-size: .95rem; font-weight: 700; margin-bottom: .5rem; }
+  .dual-card p  { font-size: .85rem; color: var(--muted); line-height: 1.6; }
+
+  /* ── FOOTER ── */
+  footer { border-top: 1px solid var(--border); padding: 2rem; text-align: center; color: var(--muted); font-size: .85rem; }
+  .footer-inner { display: flex; flex-direction: column; align-items: center; gap: .9rem; }
+  .footer-title { font-family: 'JetBrains Mono', monospace; font-size: .88rem; color: var(--text); font-weight: 600; letter-spacing: .04em; }
+  .footer-links { display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap; justify-content: center; }
+  .footer-link {
+    display: flex; align-items: center; gap: .45rem;
+    color: var(--muted); text-decoration: none; font-size: .82rem;
+    padding: .35rem .8rem; border: 1px solid var(--border);
+    border-radius: 8px; background: var(--card);
+    transition: color .2s, border-color .2s, background .2s;
+  }
+  .footer-link:hover { color: var(--text); border-color: #334155; background: #1f2d45; }
+
+  /* ── ANIMATIONS ── */
+  .fade-in { opacity: 0; transform: translateY(20px); transition: opacity .6s ease, transform .6s ease; }
+  .fade-in.visible { opacity: 1; transform: none; }
+
+  @media (max-width: 600px) {
+    .dual-grid { grid-template-columns: 1fr; }
+    .cmd-card-header { grid-template-columns: 1fr; }
+    .cmd-tag { width: fit-content; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="main-nav">
+  <a href="#images"><span class="nav-num">01</span>Images</a>
+  <a href="#containers"><span class="nav-num">02</span>Containers</a>
+  <a href="#ports"><span class="nav-num">03</span>Ports</a>
+  <a href="#volumes"><span class="nav-num">04</span>Volumes</a>
+  <a href="#envvars"><span class="nav-num">05</span>Env Variables</a>
+  <a href="#exec"><span class="nav-num">06</span>Exec & Logs</a>
+  <a href="#network"><span class="nav-num">07</span>Network</a>
+  <a href="#compose"><span class="nav-num">08</span>Compose</a>
+  <a href="#cleanup"><span class="nav-num">09</span>Cleanup</a>
+  <a href="#cheatsheet"><span class="nav-num">⚡</span>Cheat Sheet</a>
+  <span class="logo">🐳 docker ref</span>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <span class="badge">🐳 DOCKER — COMMAND REFERENCE</span>
+  <h1>دليل أوامر Docker الشامل</h1>
+  <p>كل أمر محتاجه مع شرح الـ Flags وإمتى تستخدمه — مرجع سريع للمطورين</p>
+  <div class="pill-row">
+    <span class="pill">🖼️ Images</span>
+    <span class="pill">📦 Containers</span>
+    <span class="pill">🔌 Ports</span>
+    <span class="pill">💾 Volumes</span>
+    <span class="pill">🌍 Env Vars</span>
+    <span class="pill">🔗 Network</span>
+    <span class="pill">🧩 Compose</span>
+    <span class="pill">🧹 Cleanup</span>
+  </div>
+</div>
+
+<!-- CONTENT -->
+<main class="content">
+
+<!-- ══════════════════════════════════ -->
+<!-- 1. IMAGES                         -->
+<!-- ══════════════════════════════════ -->
+<section class="section fade-in" id="images">
+  <h2 class="section-title"><span class="num">١</span>Images — بناء وإدارة الـ Images</h2>
+
+  <div class="info-box blue" style="margin-bottom:1.25rem;">
+    <span class="ib-icon">💡</span>
+    <p>الـ <strong>Image</strong> = القالب. الـ <strong>Container</strong> = نسخة شغّالة منه. بتبني الـ Image مرة واحدة وتشغّل منها كانتينرات قد ما تحب.</p>
+  </div>
+
+  <div class="cmd-list">
+
+    <div class="cmd-card">
+      <div class="cmd-card-header">
+        <div>
+          <h4>بناء Image من Dockerfile</h4>
+          <p>بيقرأ الـ Dockerfile ويبني Image جديدة وسمّيها</p>
+        </div>
+        <span class="cmd-tag blue">BUILD</span>
+      </div>
+      <div class="cmd-body">
+        <pre class="cmd-code">docker build <span class="co">-t</span> <span class="cy">my-app:1.0</span> <span class="ck">.</span>
+
+<span class="cm"># مع Dockerfile في مكان تاني</span>
+docker build <span class="co">-t</span> <span class="cy">node-api</span> <span class="co">-f</span> docker-files/Dockerfile.node <span class="cp">./node-app</span></pre>
+      </div>
+      <div class="cmd-flags">
+        <div class="flag-row"><span class="flag-name">-t name:tag</span><span class="flag-desc">اسم الـ Image + الـ Tag (الإصدار). لو مكتبتش tag، هيبقى <code style="color:var(--green);font-family:JetBrains Mono">latest</code> تلقائياً.</span></div>
+        <div class="flag-row"><span class="flag-name">-f path</span><span class="flag-desc">مسار الـ Dockerfile لو مش في المجلد الحالي.</span></div>
+        <div class="flag-row"><span class="flag-name">. أو path</span><span class="flag-desc">الـ Build Context — المجلد اللي الدوكر هيبعته للـ Dockerfile. النقطة = المجلد الحالي.</span></div>
+        <div class="flag-row"><span class="flag-name">--no-cache</span><span class="flag-desc">ابنِ من أول وجديد بدون استخدام الـ Layer Cache. مفيد لما تحتاج Fresh Build.</span></div>
+      </div>
+    </div>
+
+    <div class="cmd-card">
+      <div class="cmd-card-header">
+        <div>
+          <h4>عرض الـ Images الموجودة</h4>
+          <p>شوف كل الـ Images المحلية — الاسم والحجم وتاريخ البناء</p>
+        </div>
+        <span class="cmd-tag green">LIST</span>
+      </div>
+      <div class="cmd-body">
+        <pre class="cmd-code">docker images
+
+<span class="cm"># أو بالأمر الطويل</span>
+docker image ls</pre>
+      </div>
+    </div>
+
+    <div class="cmd-card">
+      <div class="cmd-card-header">
+        <div>
+          <h4>سحب Image من Docker Hub</h4>
+          <p>نزّل Image جاهزة من الـ Registry بدون ما تبنيها</p>
+        </div>
+        <span class="cmd-tag purple">PULL</span>
+      </div>
+      <div class="cmd-body">
+        <pre class="cmd-code">docker pull <span class="cy">nginx:latest</span>
+docker pull <span class="cy">node:20-alpine</span>
+docker pull <span class="cy">mcr.microsoft.com/mssql/server:2022-latest</span></pre>
+      </div>
+    </div>
+
+    <div class="cmd-card">
+      <div class="cmd-card-header">
+        <div>
+          <h4>حذف Image</h4>
+          <p>امسح Image من جهازك لتوفير مساحة</p>
+        </div>
+        <span class="cmd-tag red">DELETE</span>
+      </div>
+      <div class="cmd-body">
+        <pre class="cmd-code">docker rmi <span class="cy">my-app:1.0</span>
+
+<span class="cm"># لو الـ Image بيستخدمها كانتينر موقف، استخدم -f للإجبار</span>
+docker rmi <span class="co">-f</span> <span class="cy">my-app:1.0</span></pre>
+      </div>
+      <div class="cmd-flags">
+        <div class="flag-row"><span class="flag-name">-f</span><span class="flag-desc">Force — بيمسح حتى لو في كانتينر بيستخدم الـ Image دي.</span></div>
+      </div>
+    </div>
+
+    <div class="cmd-card">
+      <div class="cmd-card-header">
+        <div>
+          <h4>معلومات تفصيلية عن Image</h4>
+          <p>اعرف الـ Layers والـ Config والـ Env Variables الجوّانية</p>
+        </div>
+        <span class="cmd-tag yellow">INSPECT</span>
+      </div>
+      <div class="cmd-body">
+        <pre class="cmd-code">docker inspect <span class="cy">my-app:1.0</span>
+
+<span class="cm"># استخرج معلومة معينة بـ format</span>
+docker inspect <span class="co">--format</span> <span class="cy">'{{.Config.Env}}'</span> my-app</pre>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════ -->
+<!-- 2. CONTAINERS                     -->
+<!-- ══════════════════════════════════ -->
+<section class="section fade-in" id="containers">
+  <h2 class="section-title"><span class="num">٢</span>Containers — تشغيل وإدارة الكانتينرات</h2>
+
+  <div class="cmd-list">
+
+    <div class="cmd-card">
+      <div class="cmd-card-header">
+        <div>
+          <h4>تشغيل كانتينر جديد</h4>
+          <p>الأمر الأساسي — بيعمل كانتينر من Image ويشغّله</p>
+        </div>
+        <span class="cmd-tag green">RUN</span>
+      </div>
+      <div class="cmd-body">
+        <pre class="cmd-code"><span class="cm"># تشغيل في الخلفية (Detached)</span>
+docker run <span class="co">-d</span> <span class="co">--name</span> <span class="cy">my-container</span> <span class="cp">my-app</span>
+
+<span class="cm"># تشغيل تفاعلي (يفتح Terminal جوّاه)</span>
+docker run <span class="co">-it</span> <span class="co">--name</span> <span class="cy">test</span> <span class="cp">ubuntu</span> bash
+
+<span class="cm"># تشغيل واحذفه تلقائياً لما يخلص</span>
+docker run <span class="co">--rm</span> <span class="cp">my-app</span></pre>
+      </div>
+      <div class="cmd-flags">
+        <div class="flag-row"><span class="flag-name">-d</span><span class="flag-desc">Detached — شغّل في الخلفية ورجّع الـ Terminal ليك فوراً.</span></div>
+        <div class="flag-row"><span class="flag-name">-it</span><span class="flag-desc">Interactive + TTY — افتح Terminal تفاعلي جوّا الكانتينر.</span></div>
+        <div class="flag-row"><span class="flag-name">--name</span><span class="flag-desc">اسم مخصوص للكانتينر بدل اسم عشوائي. بتستخدمه في كل الأوامر التانية.</span></div>
+        <div class="flag-row"><span class="flag-name">--rm</span><span class="flag-desc">احذف الكانتينر تلقائياً لما يوقف. مفيد للـ Testing.</span></div>
+        <div class="flag-row"><span class="flag-name">--restart</span><span class="flag-desc">سياسة إعادة التشغيل: <code style="color:var(--green);font-family:JetBrains Mono">no</code> | <code style="color:var(--green);font-family:JetBrains Mono">always</code> | <code style="color:var(--green);font-family:JetBrains Mono">on-failure</code> | <code style="color:var(--green);font-family:JetBrains Mono">unless-stopped</code></span></div>
+      </div>
+    </div>
+
+    <div class="cmd-card">
+      <div class="cmd-card-header">
+        <div>
+          <h4>عرض الكانتينرات</h4>
+          <p>شوف الشغّالة أو الكل بما فيهم الموقفة</p>
+        </div>
+        <span class="cmd-tag blue">LIST</span>
+      </div>
+      <div class="cmd-body">
+        <pre class="cmd-code"><span class="cm"># الكانتينرات الشغّالة بس</span>
+docker ps
+
+<span class="cm"># الكل — شغّالة وموقفة</span>
+docker ps <span class="co">-a</span>
+
+<span class="cm"># اعرض IDs بس (مفيد في Scripts)</span>
+docker ps <span class="co">-q</span></pre>
+      </div>
+      <div class="cmd-flags">
+        <div class="flag-row"><span class="flag-name">-a</span><span class="flag-desc">All — بيعرض الكانتينرات الموقفة كمان.</span></div>
+        <div class="flag-row"><span class="flag-name">-q</span><span class="flag-desc">Quiet — بيرجّع IDs بس. بتستخدمها في: <code style="color:var(--green);font-family:JetBrains Mono">docker stop $(docker ps -q)</code></span></div>
+      </div>
+    </div>
+
+    <div class="cmd-card">
+      <div class="cmd-card-header">
+        <div>
+          <h4>إيقاف وحذف الكانتينرات</h4>
+          <p>وقّف كانتينر شغّال أو احذفه نهائياً</p>
+        </div>
+        <span class="cmd-tag red">STOP / RM</span>
+      </div>
+      <div class="cmd-body">
+        <pre class="cmd-code"><span class="cm"># وقّف كانتينر بالاسم أو الـ ID</span>
+docker stop <span class="cy">my-container</span>
+
+<span class="cm"># احذف كانتينر موقف</span>
+docker rm <span class="cy">my-container</span>
+
+<span class="cm"># وقّف واحذف في خطوة واحدة</span>
+docker stop <span class="cy">my-container</span> && docker rm <span class="cy">my-container</span>
+
+<span class="cm"># وقّف كل الكانتينرات الشغّالة</span>
+docker stop $(docker ps <span class="co">-q</span>)
+
+<span class="cm"># احذف كل الكانتينرات الموقفة</span>
+docker rm $(docker ps <span class="co">-aq</span>)</pre>
+      </div>
+      <div class="cmd-flags">
+        <div class="flag-row"><span class="flag-name">-f</span><span class="flag-desc">Force — احذف الكانتينر حتى لو شغّال (من غير stop أولاً).</span></div>
+      </div>
+    </div>
+
+    <div class="cmd-card">
+      <div class="cmd-card-header">
+        <div>
+          <h4>Start / Restart / Pause</h4>
+          <p>إعادة تشغيل كانتينر موقف أو إيقاف مؤقت</p>
+        </div>
+        <span class="cmd-tag orange">CONTROL</span>
+      </div>
+      <div class="cmd-body">
+        <pre class="cmd-code"><span class="cm"># شغّل كانتينر موقف (من غير ما تعمل run جديد)</span>
+docker start <span class="cy">my-container</span>
+
+<span class="cm"># إعادة تشغيل (stop ثم start)</span>
+docker restart <span class="cy">my-container</span>
+
+<span class="cm"># إيقاف مؤقت (freeze بدون حذف)</span>
+docker pause <span class="cy">my-container</span>
+docker unpause <span class="cy">my-container</span></pre>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════ -->
+<!-- 3. PORT MAPPING                   -->
+<!-- ══════════════════════════════════ -->
+<section class="section fade-in" id="ports">
+  <h2 class="section-title"><span class="num">٣</span>Port Mapping — ربط البورتات</h2>
+
+  <div class="quote-box">
+    الكانتينر معزول تماماً — مفيش حاجة من بره توصّله. الـ <strong>-p HOST:CONTAINER</strong> بتعمل "ماسورة" من بورت جهازك لبورت جوّا الكانتينر.
+  </div>
+
+  <div class="cmd-list">
+
+    <div class="cmd-card">
+      <div class="cmd-card-header">
+        <div>
+          <h4>ربط بورت واحد</h4>
+          <p>وجّه ترافيك من جهازك لجوّا الكانتينر</p>
+        </div>
+        <span class="cmd-tag blue">PORT</span>
+      </div>
+      <div class="cmd-body">
+        <pre class="cmd-code"><span class="cm"># بورت جهازك 5000 → بورت الكانتينر 3000</span>
+docker run <span class="co">-d</span> <span class="co">-p</span> <span class="cy">5000:3000</span> <span class="co">--name</span> my-api node-api
+
+<span class="cm"># لو الـ App بتسمع على 80</span>
+docker run <span class="co">-d</span> <span class="co">-p</span> <span class="cy">8080:80</span> nginx
+
+<span class="cm"># اسمح من أي IP يوصّل (مش localhost بس)</span>
+docker run <span class="co">-d</span> <span class="co">-p</span> <span class="cy">0.0.0.0:5000:3000</span> node-api</pre>
+      </div>
+      <div class="cmd-flags">
+        <div class="flag-row"><span class="flag-name">-p H:C</span><span class="flag-desc">HOST:CONTAINER — رقم البورت على جهازك : رقم البورت جوّا الكانتينر.</span></div>
+        <div class="flag-row"><span class="flag-name">-p H:C/udp</span><span class="flag-desc">لو محتاج UDP بدل TCP (الافتراضي).</span></div>
+      </div>
+    </div>
+
+    <div class="cmd-card">
+      <div class="cmd-card-header">
+        <div>
+          <h4>بورتات متعددة</h4>
+          <p>ربط أكتر من بورت لنفس الكانتينر</p>
+        </div>
+        <span class="cmd-tag orange">MULTI-PORT</span>
+      </div>
+      <div class="cmd-body">
+        <pre class="cmd-code"><span class="cm"># HTTP + HTTPS مثلاً</span>
+docker run <span class="co">-d</span> <span class="co">-p</span> <span class="cy">80:80</span> <span class="co">-p</span> <span class="cy">443:443</span> nginx
+
+<span class="cm"># API + Debug Port</span>
+docker run <span class="co">-d</span> <span class="co">-p</span> <span class="cy">5000:3000</span> <span class="co">-p</span> <span class="cy">9229:9229</span> node-api</pre>
+      </div>
+    </div>
+
+    <div class="cmd-card">
+      <div class="cmd-card-header">
+        <div>
+          <h4>عرض البورتات الحالية</h4>
+          <p>شوف البورتات المربوطة لكانتينر معين</p>
+        </div>
+        <span class="cmd-tag green">INFO</span>
+      </div>
+      <div class="cmd-body">
+        <pre class="cmd-code">docker port <span class="cy">my-container</span></pre>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════ -->
+<!-- 4. VOLUMES                        -->
+<!-- ══════════════════════════════════ -->
+<section class="section fade-in" id="volumes">
+  <h2 class="section-title"><span class="num">٤</span>Volumes — حفظ الداتا</h2>
+
+  <div class="info-box red" style="margin-bottom:1.25rem;">
+    <span class="ib-icon">⚠️</span>
+    <p><strong>Containers are ephemeral</strong> — أي داتا بتكتبها جوّا الكانتينر بتتمسح لما تعمل له <code style="font-family:JetBrains Mono; color:var(--yellow)">rm</code>. الـ Volume بيحفظها برّه الكانتينر.</p>
+  </div>
+
+  <div class="dual-grid" style="margin-bottom:1.25rem;">
+    <div class="dual-card">
+      <h3 style="color:var(--blue)">📦 Named Volume</h3>
+      <p>الدوكر يدير التخزين. الأسهل والأنظف. مناسب للـ Databases والداتا المهمة.</p>
+    </div>
+    <div class="dual-card">
+      <h3 style="color:var(--orange)">📁 Bind Mount</h3>
+      <p>بتربط مجلد من جهازك. بتغير الملفات وتشوف التغيير فوراً. مناسب للـ Development.</p>
+    </div>
+  </div>
+
+  <div class="cmd-list">
+
+    <div class="cmd-card">
+      <div class="cmd-card-header">
+        <div>
+          <h4>إنشاء واستخدام Named Volume</h4>
+          <p>احفظ الداتا في Volume مستقل خارج الكانتينر</p>
+        </div>
+        <span class="cmd-tag blue">NAMED VOLUME</span>
+      </div>
+      <div class="cmd-body">
+        <pre class="cmd-code"><span class="cm"># أنشئ volume</span>
+docker volume create <span class="cy">my-data</span>
+
+<span class="cm"># استخدمه في run</span>
+docker run <span class="co">-d</span> <span class="co">-v</span> <span class="cy">my-data:/app/data</span> <span class="co">--name</span> my-app node-api
+
+<span class="cm"># بيشتغل مع SQL Server كمان</span>
+docker run <span class="co">-d</span> <span class="co">-v</span> <span class="cy">sql-data:/var/opt/mssql</span> mcr.microsoft.com/mssql/server</pre>
+      </div>
+      <div class="cmd-flags">
+        <div class="flag-row"><span class="flag-name">-v vol:/path</span><span class="flag-desc">اسم الـ Volume : المسار جوّا الكانتينر. لو الـ Volume مش موجود، الدوكر هيعمله تلقائياً.</span></div>
+      </div>
+    </div>
+
+    <div class="cmd-card">
+      <div class="cmd-card-header">
+        <div>
+          <h4>Bind Mount — ربط مجلد من جهازك</h4>
+          <p>أي تغيير في المجلد يظهر فوراً جوّا الكانتينر</p>
+        </div>
+        <span class="cmd-tag orange">BIND MOUNT</span>
+      </div>
+      <div class="cmd-body">
+        <pre class="cmd-code"><span class="cm"># Windows PowerShell</span>
+docker run <span class="co">-d</span> <span class="co">-v</span> <span class="cy">C:\myapp:/app</span> node-api
+
+<span class="cm"># Linux / Mac</span>
+docker run <span class="co">-d</span> <span class="co">-v</span> <span class="cy">$(pwd)/src:/app/src</span> node-api
+
+<span class="cm"># الصيغة الجديدة بـ --mount (أوضح)</span>
+docker run <span class="co">-d</span> --mount <span class="cy">type=bind,source=$(pwd),target=/app</span> node-api</pre>
+      </div>
+    </div>
+
+    <div class="cmd-card">
+      <div class="cmd-card-header">
+        <div>
+          <h4>إدارة الـ Volumes</h4>
+          <p>عرض وحذف الـ Volumes</p>
+        </div>
+        <span class="cmd-tag green">MANAGE</span>
+      </div>
+      <div class="cmd-body">
+        <pre class="cmd-code"><span class="cm"># اعرض كل الـ Volumes</span>
+docker volume ls
+
+<span class="cm"># معلومات تفصيلية عن Volume</span>
+docker volume inspect <span class="cy">my-data</span>
+
+<span class="cm"># احذف volume</span>
+docker volume rm <span class="cy">my-data</span>
+
+<span class="cm"># احذف كل الـ Volumes اللي محدش بيستخدمها</span>
+docker volume prune</pre>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════ -->
+<!-- 5. ENV VARIABLES                  -->
+<!-- ══════════════════════════════════ -->
+<section class="section fade-in" id="envvars">
+  <h2 class="section-title"><span class="num">٥</span>Environment Variables — حقن الإعدادات</h2>
+
+  <div class="quote-box">
+    بدل ما تعمل Build جديدة لكل بيئة (Dev / Staging / Production)، <strong>حقن الإعدادات من بره</strong>. الـ Image واحدة والإعدادات بتتغير في الأمر.
+  </div>
+
+  <div class="cmd-list">
+
+    <div class="cmd-card">
+      <div class="cmd-card-header">
+        <div>
+          <h4>حقن Variable واحد أو أكتر</h4>
+          <p>مرّر إعدادات للكانتينر من Terminal مباشرة</p>
+        </div>
+        <span class="cmd-tag yellow">-e FLAG</span>
+      </div>
+      <div class="cmd-body">
+        <pre class="cmd-code"><span class="cm"># Variable واحد</span>
+docker run <span class="co">-d</span> <span class="co">-e</span> <span class="cy">NODE_ENV=production</span> node-api
+
+<span class="cm"># أكتر من واحد</span>
+docker run <span class="co">-d</span> \
+  <span class="co">-e</span> <span class="cy">NODE_ENV=production</span> \
+  <span class="co">-e</span> <span class="cy">PORT=3000</span> \
+  <span class="co">-e</span> <span class="cy">DB_HOST=database</span> \
+  node-api
+
+<span class="cm"># SQL Server مثال</span>
+docker run <span class="co">-d</span> \
+  <span class="co">-e</span> <span class="cy">ACCEPT_EULA=Y</span> \
+  <span class="co">-e</span> <span class="cy">SA_PASSWORD=YourStr0ngP@ssword</span> \
+  mcr.microsoft.com/mssql/server</pre>
+      </div>
+      <div class="cmd-flags">
+        <div class="flag-row"><span class="flag-name">-e KEY=VAL</span><span class="flag-desc">بيحدد Variable باسمه وقيمته.</span></div>
+        <div class="flag-row"><span class="flag-name">-e KEY</span><span class="flag-desc">لو كتبت الاسم بس، بيورّث القيمة من بيئة Shell الخاص بك.</span></div>
+      </div>
+    </div>
+
+    <div class="cmd-card">
+      <div class="cmd-card-header">
+        <div>
+          <h4>ملف .env — لما تكون الإعدادات كتير</h4>
+          <p>خزّن الإعدادات في ملف ومرّره كله دفعة واحدة</p>
+        </div>
+        <span class="cmd-tag orange">ENV FILE</span>
+      </div>
+      <div class="cmd-body">
+        <pre class="cmd-code"><span class="cm"># محتوى ملف .env</span>
+<span class="cm">NODE_ENV=production</span>
+<span class="cm">PORT=3000</span>
+<span class="cm">DB_PASSWORD=secret123</span>
+
+<span class="cm"># استخدام الملف</span>
+docker run <span class="co">-d</span> <span class="co">--env-file</span> <span class="cy">.env</span> node-api</pre>
+      </div>
+      <div class="cmd-flags">
+        <div class="flag-row"><span class="flag-name">--env-file</span><span class="flag-desc">مسار ملف الـ env. مفيد جداً في الـ Production — خلّي الـ .env خارج الـ Git.</span></div>
+      </div>
+    </div>
+
+    <div class="cmd-card">
+      <div class="cmd-card-header">
+        <div>
+          <h4>Variables في .NET — التحويل الخاص</h4>
+          <p>.NET بيستخدم __ بدل : في أسماء الـ Settings على Linux</p>
+        </div>
+        <span class="cmd-tag purple">.NET SPECIAL</span>
+      </div>
+      <div class="cmd-body">
+        <pre class="cmd-code"><span class="cm"># في appsettings.json بتكتب:</span>
+<span class="cm"># ConnectionStrings:DefaultConnection</span>
+
+<span class="cm"># في docker run بتكتب __ بدل :</span>
+docker run <span class="co">-d</span> \
+  <span class="co">-e</span> <span class="cy">ConnectionStrings__DefaultConnection="Server=db;..."</span> \
+  dotnet-api</pre>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════ -->
+<!-- 6. EXEC & LOGS                    -->
+<!-- ══════════════════════════════════ -->
+<section class="section fade-in" id="exec">
+  <h2 class="section-title"><span class="num">٦</span>Exec & Logs — دخول وتشخيص</h2>
+
+  <div class="cmd-list">
+
+    <div class="cmd-card">
+      <div class="cmd-card-header">
+        <div>
+          <h4>الدخول لـ Shell جوّا الكانتينر</h4>
+          <p>افتح Terminal تفاعلي جوّا الكانتينر الشغّال</p>
+        </div>
+        <span class="cmd-tag green">EXEC</span>
+      </div>
+      <div class="cmd-body">
+        <pre class="cmd-code"><span class="cm"># bash لو موجود</span>
+docker exec <span class="co">-it</span> <span class="cy">my-container</span> bash
+
+<span class="cm"># sh لـ Alpine Linux (الأخف — بدون bash)</span>
+docker exec <span class="co">-it</span> <span class="cy">my-container</span> sh
+
+<span class="cm"># تنفيذ أمر واحد بدون دخول</span>
+docker exec <span class="cy">my-container</span> ls /app
+docker exec <span class="cy">my-container</span> cat /app/data/backup.txt</pre>
+      </div>
+      <div class="cmd-flags">
+        <div class="flag-row"><span class="flag-name">-it</span><span class="flag-desc">Interactive + TTY — لازم تحطهم لما تفتح Shell تفاعلي.</span></div>
+        <div class="flag-row"><span class="flag-name">-e KEY=VAL</span><span class="flag-desc">بتحقن Variable للأمر ده بس مش للكانتينر كله.</span></div>
+        <div class="flag-row"><span class="flag-name">-w /path</span><span class="flag-desc">Working Directory — ابدأ الأمر من مجلد معين.</span></div>
+      </div>
+    </div>
+
+    <div class="cmd-card">
+      <div class="cmd-card-header">
+        <div>
+          <h4>عرض الـ Logs</h4>
+          <p>شوف الـ Output والأخطاء من الكانتينر</p>
+        </div>
+        <span class="cmd-tag blue">LOGS</span>
+      </div>
+      <div class="cmd-body">
+        <pre class="cmd-code"><span class="cm"># كل الـ logs</span>
+docker logs <span class="cy">my-container</span>
+
+<span class="cm"># آخر 50 سطر</span>
+docker logs <span class="co">--tail</span> <span class="cy">50</span> my-container
+
+<span class="cm"># متابعة live (زي tail -f)</span>
+docker logs <span class="co">-f</span> my-container
+
+<span class="cm"># آخر 20 سطر + متابعة</span>
+docker logs <span class="co">--tail</span> <span class="cy">20</span> <span class="co">-f</span> my-container</pre>
+      </div>
+      <div class="cmd-flags">
+        <div class="flag-row"><span class="flag-name">-f</span><span class="flag-desc">Follow — متابعة الـ Logs في الـ Real-time. اخرج بـ Ctrl+C.</span></div>
+        <div class="flag-row"><span class="flag-name">--tail N</span><span class="flag-desc">اعرض آخر N سطر بس بدل كل التاريخ.</span></div>
+        <div class="flag-row"><span class="flag-name">--since</span><span class="flag-desc">اعرض الـ Logs من وقت معين: <code style="color:var(--green);font-family:JetBrains Mono">--since 30m</code> أو <code style="color:var(--green);font-family:JetBrains Mono">--since 2024-01-01</code></span></div>
+      </div>
+    </div>
+
+    <div class="cmd-card">
+      <div class="cmd-card-header">
+        <div>
+          <h4>نسخ ملفات بين جهازك والكانتينر</h4>
+          <p>انقل ملفات من/لجوّا الكانتينر الشغّال</p>
+        </div>
+        <span class="cmd-tag yellow">COPY</span>
+      </div>
+      <div class="cmd-body">
+        <pre class="cmd-code"><span class="cm"># من الكانتينر لجهازك</span>
+docker cp <span class="cy">my-container:/app/logs/error.log</span> ./error.log
+
+<span class="cm"># من جهازك للكانتينر</span>
+docker cp <span class="cy">./config.json</span> my-container:/app/config.json</pre>
+      </div>
+    </div>
+
+    <div class="cmd-card">
+      <div class="cmd-card-header">
+        <div>
+          <h4>إحصائيات الأداء</h4>
+          <p>شوف استهلاك CPU والـ RAM في Real-time</p>
+        </div>
+        <span class="cmd-tag purple">STATS</span>
+      </div>
+      <div class="cmd-body">
+        <pre class="cmd-code"><span class="cm"># كل الكانتينرات الشغّالة</span>
+docker stats
+
+<span class="cm"># كانتينر واحد</span>
+docker stats <span class="cy">my-container</span>
+
+<span class="cm"># snapshot واحد بدون متابعة</span>
+docker stats <span class="co">--no-stream</span></pre>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════ -->
+<!-- 7. NETWORK                        -->
+<!-- ══════════════════════════════════ -->
+<section class="section fade-in" id="network">
+  <h2 class="section-title"><span class="num">٧</span>Network — الشبكات</h2>
+
+  <div class="info-box blue" style="margin-bottom:1.25rem;">
+    <span class="ib-icon">🌐</span>
+    <p>الكانتينرات على نفس الـ <strong>Network</strong> بتتكلم ببعض <strong>باسم الكانتينر مباشرة</strong> — مش محتاج IP. Docker Compose بيعمل الـ Network ده تلقائياً.</p>
+  </div>
+
+  <div class="cmd-list">
+
+    <div class="cmd-card">
+      <div class="cmd-card-header">
+        <div>
+          <h4>إنشاء واستخدام Network</h4>
+          <p>اعمل شبكة خاصة لكانتينراتك يتكلموا فيها</p>
+        </div>
+        <span class="cmd-tag blue">NETWORK</span>
+      </div>
+      <div class="cmd-body">
+        <pre class="cmd-code"><span class="cm"># إنشاء network</span>
+docker network create <span class="cy">my-network</span>
+
+<span class="cm"># شغّل كانتينرات على نفس الشبكة</span>
+docker run <span class="co">-d</span> <span class="co">--network</span> <span class="cy">my-network</span> <span class="co">--name</span> database mcr.microsoft.com/mssql/server
+docker run <span class="co">-d</span> <span class="co">--network</span> <span class="cy">my-network</span> <span class="co">--name</span> api node-api
+
+<span class="cm"># دلوقتي الـ api يقدر يتكلم الـ database باسمه</span>
+<span class="cm"># Server=database (مش Server=localhost!)</span></pre>
+      </div>
+    </div>
+
+    <div class="cmd-card">
+      <div class="cmd-card-header">
+        <div>
+          <h4>إدارة الـ Networks</h4>
+          <p>عرض وحذف الشبكات</p>
+        </div>
+        <span class="cmd-tag green">MANAGE</span>
+      </div>
+      <div class="cmd-body">
+        <pre class="cmd-code"><span class="cm"># اعرض كل الشبكات</span>
+docker network ls
+
+<span class="cm"># تفاصيل شبكة — مين فيها</span>
+docker network inspect <span class="cy">my-network</span>
+
+<span class="cm"># احذف شبكة</span>
+docker network rm <span class="cy">my-network</span>
+
+<span class="cm"># وصّل كانتينر شغّال لشبكة</span>
+docker network connect <span class="cy">my-network</span> my-container
+
+<span class="cm"># افصل كانتينر من شبكة</span>
+docker network disconnect <span class="cy">my-network</span> my-container</pre>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════ -->
+<!-- 8. DOCKER COMPOSE                 -->
+<!-- ══════════════════════════════════ -->
+<section class="section fade-in" id="compose">
+  <h2 class="section-title"><span class="num">٨</span>Docker Compose — أوامر أساسية</h2>
+
+  <div class="quote-box">
+    بدل ما تشغّل كل كانتينر بيده، <strong>docker compose</strong> بيشغّل كل حاجة بأمر واحد من ملف YAML واحد. الشبكة والـ Volumes بتتعمل تلقائياً.
+  </div>
+
+  <div class="cmd-list">
+
+    <div class="cmd-card">
+      <div class="cmd-card-header">
+        <div>
+          <h4>تشغيل وإيقاف السيستم</h4>
+          <p>الأوامر الأساسية اليومية في docker compose</p>
+        </div>
+        <span class="cmd-tag green">UP / DOWN</span>
+      </div>
+      <div class="cmd-body">
+        <pre class="cmd-code"><span class="cm"># شغّل كل الـ Services (واقف — بتشوف الـ Logs)</span>
+docker compose up
+
+<span class="cm"># شغّل في الخلفية</span>
+docker compose up <span class="co">-d</span>
+
+<span class="cm"># شغّل + ابنِ الـ Images أولاً</span>
+docker compose up <span class="co">--build</span>
+
+<span class="cm"># شغّل في الخلفية + Build</span>
+docker compose up <span class="co">--build</span> <span class="co">-d</span>
+
+<span class="cm"># وقّف كل حاجة + امسح الكانتينرات والشبكات</span>
+docker compose down
+
+<span class="cm"># وقّف + امسح الـ Volumes كمان</span>
+docker compose down <span class="co">-v</span></pre>
+      </div>
+      <div class="cmd-flags">
+        <div class="flag-row"><span class="flag-name">--build</span><span class="flag-desc">أعد بناء الـ Images قبل التشغيل. حطها لما تعدّل الكود.</span></div>
+        <div class="flag-row"><span class="flag-name">-d</span><span class="flag-desc">Detached — شغّل في الخلفية.</span></div>
+        <div class="flag-row"><span class="flag-name">-v</span><span class="flag-desc">في down — بيمسح الـ Volumes كمان. احذر مع الداتا المهمة.</span></div>
+      </div>
+    </div>
+
+    <div class="cmd-card">
+      <div class="cmd-card-header">
+        <div>
+          <h4>ملف compose مختلف</h4>
+          <p>لما عندك ملفات compose متعددة</p>
+        </div>
+        <span class="cmd-tag orange">-f FLAG</span>
+      </div>
+      <div class="cmd-body">
+        <pre class="cmd-code">docker compose <span class="co">-f</span> <span class="cy">docker-files/docker-compose.yml</span> up --build
+docker compose <span class="co">-f</span> <span class="cy">docker-compose.prod.yml</span> up -d
+docker compose <span class="co">-f</span> <span class="cy">docker-files/docker-compose.yml</span> down</pre>
+      </div>
+    </div>
+
+    <div class="cmd-card">
+      <div class="cmd-card-header">
+        <div>
+          <h4>Logs ومراقبة الـ Services</h4>
+          <p>تابع ما بيحصل في كل Service</p>
+        </div>
+        <span class="cmd-tag blue">LOGS</span>
+      </div>
+      <div class="cmd-body">
+        <pre class="cmd-code"><span class="cm"># logs كل الـ Services</span>
+docker compose logs
+
+<span class="cm"># Service معين + متابعة</span>
+docker compose logs <span class="co">-f</span> <span class="cy">node-app</span>
+
+<span class="cm"># آخر 50 سطر</span>
+docker compose logs <span class="co">--tail</span> <span class="cy">50</span> node-app</pre>
+      </div>
+    </div>
+
+    <div class="cmd-card">
+      <div class="cmd-card-header">
+        <div>
+          <h4>أوامر إضافية مفيدة</h4>
+          <p>للـ Debugging وإدارة الـ Services</p>
+        </div>
+        <span class="cmd-tag purple">EXTRA</span>
+      </div>
+      <div class="cmd-body">
+        <pre class="cmd-code"><span class="cm"># اعرض الـ Services وحالتها</span>
+docker compose ps
+
+<span class="cm"># أعد تشغيل Service واحدة</span>
+docker compose restart <span class="cy">node-app</span>
+
+<span class="cm"># ابنِ الـ Images بدون تشغيل</span>
+docker compose build
+
+<span class="cm"># نفّذ أمر في Service شغّالة</span>
+docker compose exec <span class="cy">node-app</span> sh
+
+<span class="cm"># شغّل Service مرة واحدة بس (مش تفتحها دايم)</span>
+docker compose run <span class="co">--rm</span> <span class="cy">node-app</span> npm test</pre>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════ -->
+<!-- 9. CLEANUP                        -->
+<!-- ══════════════════════════════════ -->
+<section class="section fade-in" id="cleanup">
+  <h2 class="section-title"><span class="num">٩</span>Cleanup — التنظيف واسترداد المساحة</h2>
+
+  <div class="info-box yellow" style="margin-bottom:1.25rem;">
+    <span class="ib-icon">💡</span>
+    <p>Docker بيراكم Layers قديمة وكانتينرات موقفة وـ Volumes يتيمة. نظّفها بانتظام.</p>
+  </div>
+
+  <div class="cmd-list">
+
+    <div class="cmd-card">
+      <div class="cmd-card-header">
+        <div>
+          <h4>تنظيف شامل</h4>
+          <p>امسح كل حاجة مش بتستخدمها دلوقتي</p>
+        </div>
+        <span class="cmd-tag red">PRUNE</span>
+      </div>
+      <div class="cmd-body">
+        <pre class="cmd-code"><span class="cm"># امسح الكانتينرات الموقفة + الشبكات غير المستخدمة + الـ Images اليتيمة</span>
+docker system prune
+
+<span class="cm"># نفس الكلام + الـ Volumes</span>
+docker system prune <span class="co">--volumes</span>
+
+<span class="cm"># نفس الكلام + الـ Images اللي محدش بيستخدمها (حتى لو مش يتيمة)</span>
+docker system prune <span class="co">-a</span>
+
+<span class="cm"># الـ Nuclear Option — امسح كل حاجة بدون سؤال</span>
+docker system prune <span class="co">-a</span> <span class="co">--volumes</span> <span class="co">-f</span></pre>
+      </div>
+      <div class="cmd-flags">
+        <div class="flag-row"><span class="flag-name">-a</span><span class="flag-desc">All — بيمسح كل الـ Images المش مستخدمة، مش بس اليتيمة.</span></div>
+        <div class="flag-row"><span class="flag-name">--volumes</span><span class="flag-desc">بيمسح الـ Volumes اللي محدش بيستخدمها. <span style="color:var(--red)">⚠️ احذر من داتا مهمة.</span></span></div>
+        <div class="flag-row"><span class="flag-name">-f</span><span class="flag-desc">Force — بيمسح بدون سؤال "أنت متأكد؟"</span></div>
+      </div>
+    </div>
+
+    <div class="cmd-card">
+      <div class="cmd-card-header">
+        <div>
+          <h4>تنظيف موجّه</h4>
+          <p>نظّف نوع محدد فقط</p>
+        </div>
+        <span class="cmd-tag orange">TARGETED</span>
+      </div>
+      <div class="cmd-body">
+        <pre class="cmd-code"><span class="cm"># امسح بس الكانتينرات الموقفة</span>
+docker container prune
+
+<span class="cm"># امسح بس الـ Images اليتيمة (dangling)</span>
+docker image prune
+
+<span class="cm"># امسح بس الـ Volumes غير المستخدمة</span>
+docker volume prune
+
+<span class="cm"># امسح بس الشبكات غير المستخدمة</span>
+docker network prune</pre>
+      </div>
+    </div>
+
+    <div class="cmd-card">
+      <div class="cmd-card-header">
+        <div>
+          <h4>معرفة المساحة المستخدمة</h4>
+          <p>شوف بالتفصيل بيستخدم إيه قد إيه</p>
+        </div>
+        <span class="cmd-tag blue">DISK USAGE</span>
+      </div>
+      <div class="cmd-body">
+        <pre class="cmd-code">docker system df
+
+<span class="cm"># تفصيلي أكتر</span>
+docker system df <span class="co">-v</span></pre>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════ -->
+<!-- ⚡ CHEAT SHEET                    -->
+<!-- ══════════════════════════════════ -->
+<section class="section fade-in" id="cheatsheet">
+  <h2 class="section-title"><span class="num" style="width:auto;padding:0 .6rem;font-size:.75rem;">⚡</span>Cheat Sheet — مرجع سريع</h2>
+
+  <table class="quick-table">
+    <thead>
+      <tr>
+        <th>الأمر</th>
+        <th>بيعمل إيه؟</th>
+        <th>متى تستخدمه؟</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>docker build -t name .</td><td>يبني Image من Dockerfile</td><td>بعد أي تعديل في الكود</td></tr>
+      <tr><td>docker images</td><td>يعرض كل الـ Images المحلية</td><td>تتأكد الـ Image اتبنت</td></tr>
+      <tr><td>docker pull image:tag</td><td>ينزل Image من Docker Hub</td><td>أول ما تحتاج Image جاهزة</td></tr>
+      <tr><td>docker rmi image</td><td>يحذف Image</td><td>توفير مساحة</td></tr>
+      <tr><td>docker run -d -p H:C --name n img</td><td>يشغّل كانتينر في الخلفية</td><td>كل مرة تشغّل التطبيق</td></tr>
+      <tr><td>docker run -it img bash</td><td>يفتح terminal تفاعلي</td><td>Debugging واستكشاف</td></tr>
+      <tr><td>docker ps</td><td>الكانتينرات الشغّالة</td><td>تتأكد الكانتينر شغّال</td></tr>
+      <tr><td>docker ps -a</td><td>كل الكانتينرات + الموقفة</td><td>تشوف كل حاجة</td></tr>
+      <tr><td>docker stop name</td><td>يوقف كانتينر</td><td>لما تخلص من الشغل</td></tr>
+      <tr><td>docker rm name</td><td>يحذف كانتينر موقف</td><td>بعد ما توقفه</td></tr>
+      <tr><td>docker stop $(docker ps -q)</td><td>يوقف كل الكانتينرات</td><td>cleanup سريع</td></tr>
+      <tr><td>docker rm $(docker ps -aq)</td><td>يحذف كل الكانتينرات</td><td>cleanup شامل</td></tr>
+      <tr><td>docker logs -f name</td><td>يعرض الـ logs live</td><td>Debugging وتتبع الأخطاء</td></tr>
+      <tr><td>docker exec -it name sh</td><td>يدخل shell الكانتينر</td><td>فحص الملفات والحالة</td></tr>
+      <tr><td>docker exec name ls /app</td><td>ينفذ أمر بدون دخول</td><td>فحص سريع</td></tr>
+      <tr><td>docker volume create name</td><td>ينشئ Volume مستقل</td><td>قبل تشغيل أي DB</td></tr>
+      <tr><td>-v vol:/path</td><td>يربط Volume بمجلد</td><td>في أمر docker run</td></tr>
+      <tr><td>-e KEY=VALUE</td><td>يحقن Environment Variable</td><td>تغيير الإعدادات بدون Build</td></tr>
+      <tr><td>--env-file .env</td><td>يقرأ Variables من ملف</td><td>لما الإعدادات كتيرة</td></tr>
+      <tr><td>docker network create name</td><td>ينشئ شبكة خاصة</td><td>قبل تشغيل multi-container</td></tr>
+      <tr><td>--network name</td><td>يضم الكانتينر للشبكة</td><td>في docker run</td></tr>
+      <tr><td>docker compose up --build</td><td>يبني ويشغّل كل السيستم</td><td>أسرع طريقة لتشغيل المشروع</td></tr>
+      <tr><td>docker compose up -d</td><td>يشغّل في الخلفية</td><td>Production / استخدام عادي</td></tr>
+      <tr><td>docker compose down</td><td>يوقف ويمسح الكانتينرات</td><td>لما تخلص</td></tr>
+      <tr><td>docker compose down -v</td><td>+ يمسح الـ Volumes</td><td>Fresh start كامل</td></tr>
+      <tr><td>docker compose logs -f svc</td><td>logs service معين live</td><td>Debugging في compose</td></tr>
+      <tr><td>docker compose exec svc sh</td><td>يدخل service شغّالة</td><td>Debugging في compose</td></tr>
+      <tr><td>docker system prune -a --volumes</td><td>ينظف كل حاجة مش مستخدمة</td><td>أسبوعياً لاسترداد مساحة</td></tr>
+      <tr><td>docker system df</td><td>يعرض المساحة المستخدمة</td><td>قبل ما تنظف</td></tr>
+      <tr><td>Server=database في Compose</td><td>اسم الـ Service كـ DNS</td><td>في Connection Strings</td></tr>
+      <tr><td>ConnectionStrings__Key</td><td>: → __ لـ .NET على Linux</td><td>في -e أو Compose env</td></tr>
+    </tbody>
+  </table>
+</section>
+
+</main>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-title">🐳 Docker Reference Guide — Mohamed Ehab</div>
+    <div class="footer-links">
+      <a href="https://www.linkedin.com/in/mohamed-ehab-63b9a4317" target="_blank" rel="noopener" class="footer-link">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="color:#0a66c2"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+        LinkedIn
+      </a>
+      <a href="https://github.com/Mohamed-ehab-mohy" target="_blank" rel="noopener" class="footer-link">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="color:#e2e8f0"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+        GitHub
+      </a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); }
+    });
+  }, { threshold: 0.08 });
+  document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('#main-nav a[href^="#"]');
+  const navObserver = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        navLinks.forEach(a => a.classList.remove('active'));
+        const active = document.querySelector(`#main-nav a[href="#${e.target.id}"]`);
+        if (active) {
+          active.classList.add('active');
+          active.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+        }
+      }
+    });
+  }, { rootMargin: '-30% 0px -60% 0px' });
+  sections.forEach(s => navObserver.observe(s));
+</script>
+</body>
+</html>
