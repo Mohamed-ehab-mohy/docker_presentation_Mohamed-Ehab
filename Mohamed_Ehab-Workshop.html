@@ -1,0 +1,1458 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Docker Workshop — Dockerfile · Ports · Volumes · Compose</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #0b0f1a;
+    --surface:   #111827;
+    --card:      #1a2235;
+    --border:    #1f2d45;
+    --green:     #22d3a0;
+    --blue:      #38bdf8;
+    --orange:    #fb923c;
+    --purple:    #a78bfa;
+    --yellow:    #fbbf24;
+    --red:       #f87171;
+    --text:      #e2e8f0;
+    --muted:     #94a3b8;
+    --code-bg:   #0d1a2d;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans Arabic', sans-serif;
+    font-size: 17px;
+    line-height: 1.75;
+    min-height: 100vh;
+  }
+
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(11,15,26,.97);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 1.5rem;
+    display: flex; align-items: center; gap: .25rem;
+    height: 60px; overflow-x: auto; white-space: nowrap;
+  }
+  nav::-webkit-scrollbar { height: 0; }
+
+  nav .logo {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--blue); font-size: .88rem; font-weight: 700;
+    letter-spacing: .06em; flex-shrink: 0; margin-left: auto;
+    padding: .35rem .85rem;
+    background: rgba(56,189,248,.08);
+    border: 1px solid rgba(56,189,248,.2);
+    border-radius: 8px;
+    display: flex; align-items: center; gap: .5rem;
+  }
+
+  nav a {
+    color: var(--muted); text-decoration: none;
+    font-size: .78rem; font-weight: 500;
+    transition: color .15s, background .15s, border-color .15s;
+    flex-shrink: 0;
+    padding: .35rem .75rem;
+    border-radius: 7px;
+    border: 1px solid transparent;
+    display: flex; align-items: center; gap: .35rem;
+    font-family: 'IBM Plex Sans Arabic', sans-serif;
+    letter-spacing: .01em;
+  }
+  nav a:hover {
+    color: var(--text);
+    background: rgba(255,255,255,.05);
+    border-color: var(--border);
+  }
+  nav a.active {
+    color: var(--blue);
+    background: rgba(56,189,248,.1);
+    border-color: rgba(56,189,248,.25);
+  }
+  nav a .nav-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .65rem; font-weight: 700;
+    color: var(--blue); opacity: .7;
+  }
+
+  .hero {
+    padding: 5rem 2rem 3rem;
+    max-width: 900px; margin: 0 auto; text-align: center;
+  }
+  .hero .badge {
+    display: inline-block;
+    background: rgba(56,189,248,.12);
+    border: 1px solid rgba(56,189,248,.3);
+    color: var(--blue);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .75rem; padding: .35rem .9rem;
+    border-radius: 999px; margin-bottom: 1.5rem; letter-spacing: .08em;
+  }
+  .hero h1 {
+    font-size: clamp(2.2rem, 5vw, 3.4rem);
+    font-weight: 700; line-height: 1.2; margin-bottom: 1rem;
+    background: linear-gradient(135deg, #e2e8f0 30%, #38bdf8);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .pill-row { display: flex; flex-wrap: wrap; gap: .6rem; justify-content: center; margin-top: 1.5rem; }
+  .pill {
+    background: var(--card); border: 1px solid var(--border);
+    color: var(--muted); font-size: .8rem;
+    padding: .3rem .85rem; border-radius: 999px;
+  }
+
+  .content { max-width: 900px; margin: 0 auto; padding: 0 2rem 6rem; }
+  .section { margin-bottom: 5rem; scroll-margin-top: 70px; }
+  .section-title {
+    display: flex; align-items: center; gap: .75rem;
+    font-size: 1.5rem; font-weight: 700;
+    margin-bottom: 1.5rem; padding-bottom: .75rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-title .num {
+    font-family: 'JetBrains Mono', monospace; font-size: .85rem;
+    color: var(--blue);
+    background: rgba(56,189,248,.1); border: 1px solid rgba(56,189,248,.25);
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 8px; flex-shrink: 0;
+  }
+
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 1.5rem; margin-bottom: 1rem;
+  }
+  .card-accent-blue   { border-right: 3px solid var(--blue); }
+  .card-accent-green  { border-right: 3px solid var(--green); }
+  .card-accent-orange { border-right: 3px solid var(--orange); }
+  .card-accent-purple { border-right: 3px solid var(--purple); }
+  .card-accent-yellow { border-right: 3px solid var(--yellow); }
+  .card-accent-red    { border-right: 3px solid var(--red); }
+
+  .term-list { display: flex; flex-direction: column; gap: .7rem; }
+  .term-row {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 1rem 1.25rem;
+    display: grid; grid-template-columns: auto 1fr;
+    gap: .75rem 1.25rem; align-items: start;
+  }
+  .term-label {
+    font-family: 'JetBrains Mono', monospace; font-size: .82rem; font-weight: 600;
+    color: var(--blue); background: rgba(56,189,248,.1); border: 1px solid rgba(56,189,248,.2);
+    padding: .25rem .65rem; border-radius: 6px;
+    white-space: nowrap; align-self: start; margin-top: .1rem;
+  }
+  .term-label.green  { color: var(--green);  background: rgba(34,211,160,.1);  border-color: rgba(34,211,160,.2); }
+  .term-label.orange { color: var(--orange); background: rgba(251,146,60,.1);  border-color: rgba(251,146,60,.2); }
+  .term-label.purple { color: var(--purple); background: rgba(167,139,250,.1); border-color: rgba(167,139,250,.2); }
+  .term-label.red    { color: var(--red);    background: rgba(248,113,113,.1); border-color: rgba(248,113,113,.2); }
+  .term-label.yellow { color: var(--yellow); background: rgba(251,191,36,.1);  border-color: rgba(251,191,36,.2); }
+  .term-desc { color: var(--muted); font-size: .92rem; }
+
+  .steps-grid { display: flex; flex-direction: column; gap: .75rem; margin: 1.25rem 0; }
+  .step-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 1.1rem 1.25rem;
+    display: grid; grid-template-columns: auto 1fr;
+    gap: .75rem 1.25rem; align-items: start;
+  }
+  .step-badge {
+    font-family: 'JetBrains Mono', monospace; font-size: .8rem; font-weight: 700;
+    width: 36px; height: 36px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .step-badge.blue   { background: rgba(56,189,248,.15);  color: var(--blue); }
+  .step-badge.green  { background: rgba(34,211,160,.15);  color: var(--green); }
+  .step-badge.orange { background: rgba(251,146,60,.15);  color: var(--orange); }
+  .step-badge.purple { background: rgba(167,139,250,.15); color: var(--purple); }
+  .step-badge.red    { background: rgba(248,113,113,.15); color: var(--red); }
+  .step-badge.yellow { background: rgba(251,191,36,.15);  color: var(--yellow); }
+  .step-body h4 {
+    font-family: 'JetBrains Mono', monospace; font-size: .88rem; font-weight: 700;
+    margin-bottom: .2rem;
+  }
+  .step-body p { font-size: .88rem; color: var(--muted); }
+
+  .dual-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.25rem 0; }
+  .dual-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 1.25rem;
+  }
+  .dual-card h3 { font-size: .95rem; font-weight: 700; margin-bottom: .6rem; }
+  .dual-card p  { font-size: .88rem; color: var(--muted); }
+
+  .diagram-box {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 1.5rem; margin: 1.5rem 0; overflow-x: auto;
+    direction: ltr;
+  }
+  .diagram-box .diagram-title {
+    font-size: .78rem; color: var(--muted); text-align: center;
+    margin-bottom: 1rem; font-family: 'JetBrains Mono', monospace;
+    letter-spacing: .05em; text-transform: uppercase;
+  }
+  .diag-svg { display: block; margin: 0 auto; max-width: 100%; }
+  .diag-box        { fill: #1a2235; stroke: #1f2d45; stroke-width: 1.5; }
+  .diag-box-green  { fill: rgba(34,211,160,.12);  stroke: rgba(34,211,160,.5);  stroke-width:1.5; }
+  .diag-box-blue   { fill: rgba(56,189,248,.12);  stroke: rgba(56,189,248,.5);  stroke-width:1.5; }
+  .diag-box-orange { fill: rgba(251,146,60,.12);  stroke: rgba(251,146,60,.5);  stroke-width:1.5; }
+  .diag-box-purple { fill: rgba(167,139,250,.12); stroke: rgba(167,139,250,.5); stroke-width:1.5; }
+  .diag-box-red    { fill: rgba(248,113,113,.12); stroke: rgba(248,113,113,.5); stroke-width:1.5; }
+  .diag-box-yellow { fill: rgba(251,191,36,.12);  stroke: rgba(251,191,36,.5);  stroke-width:1.5; }
+
+  .code-sequence { display: flex; flex-direction: column; gap: .5rem; margin: 1rem 0; }
+  .code-step { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .code-step-label {
+    display: flex; align-items: center; gap: .6rem; flex-wrap: wrap;
+    padding: .5rem 1rem;
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    font-size: .82rem; color: var(--muted);
+    font-family: 'IBM Plex Sans Arabic', sans-serif;
+  }
+  .code-step-label .step-dot {
+    width: 22px; height: 22px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'JetBrains Mono', monospace; font-size: .7rem; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .code-step-label .step-dot.blue   { background: rgba(56,189,248,.15);  color: var(--blue); }
+  .code-step-label .step-dot.orange { background: rgba(251,146,60,.15);  color: var(--orange); }
+  .code-step-label .step-dot.green  { background: rgba(34,211,160,.15);  color: var(--green); }
+  .code-step-label .step-dot.purple { background: rgba(167,139,250,.15); color: var(--purple); }
+  .code-step-label .step-dot.red    { background: rgba(248,113,113,.15); color: var(--red); }
+  .code-step-label .step-dot.yellow { background: rgba(251,191,36,.15);  color: var(--yellow); }
+  .code-step-label .label-text { flex: 1; min-width: 0; }
+  .code-step-label .ctx-badge {
+    font-family: 'JetBrains Mono', monospace; font-size: .72rem;
+    padding: .15rem .5rem; border-radius: 4px; flex-shrink: 0; margin-left: auto;
+  }
+  .code-step-label .ctx-badge.terminal { background: rgba(56,189,248,.1);  color: var(--blue); }
+  .code-step-label .ctx-badge.file     { background: rgba(34,211,160,.1);  color: var(--green); }
+  .code-step-label .ctx-badge.compose  { background: rgba(251,146,60,.1);  color: var(--orange); }
+  .code-step-label .ctx-badge.docker   { background: rgba(167,139,250,.1); color: var(--purple); }
+  .code-step .code-block { margin: 0; border: none; border-radius: 0; }
+
+  .code-block {
+    background: var(--code-bg); border: 1px solid var(--border);
+    border-radius: 10px; padding: 1rem 1.25rem;
+    font-family: 'JetBrains Mono', monospace; font-size: .85rem;
+    color: var(--green); overflow-x: auto;
+    margin: 1rem 0; direction: ltr; text-align: left; line-height: 1.9;
+    white-space: pre;
+  }
+  .code-block .cm { color: var(--muted); }
+  .code-block .ck { color: var(--blue); }
+  .code-block .cy { color: var(--yellow); }
+  .code-block .cr { color: var(--red); }
+  .code-block .cp { color: var(--purple); }
+  .code-block .co { color: var(--orange); }
+
+  .info-box {
+    border-radius: 12px; padding: 1rem 1.25rem;
+    display: flex; gap: .85rem; align-items: flex-start; margin: 1rem 0;
+  }
+  .info-box.blue   { background: rgba(56,189,248,.07);  border: 1px solid rgba(56,189,248,.25); }
+  .info-box.orange { background: rgba(251,146,60,.07);  border: 1px solid rgba(251,146,60,.25); }
+  .info-box.green  { background: rgba(34,211,160,.07);  border: 1px solid rgba(34,211,160,.25); }
+  .info-box.purple { background: rgba(167,139,250,.07); border: 1px solid rgba(167,139,250,.25); }
+  .info-box.yellow { background: rgba(251,191,36,.07);  border: 1px solid rgba(251,191,36,.25); }
+  .info-box.red    { background: rgba(248,113,113,.07); border: 1px solid rgba(248,113,113,.25); }
+  .info-box .ib-icon { font-size: 1.25rem; flex-shrink: 0; line-height: 1.4; }
+  .info-box p { font-size: .92rem; color: var(--text); }
+
+  .quick-table {
+    width: 100%; border-collapse: collapse; font-size: .88rem; margin-top: 1rem;
+  }
+  .quick-table th {
+    background: var(--surface); border: 1px solid var(--border);
+    padding: .6rem 1rem; color: var(--muted);
+    font-weight: 600; font-size: .8rem; text-align: right;
+  }
+  .quick-table td {
+    background: var(--card); border: 1px solid var(--border);
+    padding: .65rem 1rem; color: var(--muted); vertical-align: top;
+  }
+  .quick-table td:first-child {
+    font-family: 'JetBrains Mono', monospace; color: var(--green);
+    direction: ltr; text-align: left;
+  }
+  .quick-table tr:hover td { background: #1f2d45; }
+
+  .quote-box {
+    background: var(--card); border: 1px solid var(--border);
+    border-right: 4px solid var(--yellow);
+    border-radius: 0 12px 12px 0;
+    padding: 1.25rem 1.5rem; margin: 2rem 0;
+    font-size: 1rem; color: var(--text); line-height: 1.8;
+  }
+  .quote-box strong { color: var(--yellow); }
+
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 2rem; text-align: center; color: var(--muted); font-size: .85rem;
+  }
+  .footer-inner { display: flex; flex-direction: column; align-items: center; gap: .9rem; }
+  .footer-title {
+    font-family: 'JetBrains Mono', monospace; font-size: .88rem;
+    color: var(--text); font-weight: 600; letter-spacing: .04em;
+  }
+  .footer-links { display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap; justify-content: center; }
+  .footer-link {
+    display: flex; align-items: center; gap: .45rem;
+    color: var(--muted); text-decoration: none; font-size: .82rem;
+    padding: .35rem .8rem; border: 1px solid var(--border);
+    border-radius: 8px; background: var(--card);
+    transition: color .2s, border-color .2s, background .2s;
+  }
+  .footer-link:hover { color: var(--text); border-color: #334155; background: #1f2d45; }
+
+  .fade-in { opacity: 0; transform: translateY(20px); transition: opacity .6s ease, transform .6s ease; }
+  .fade-in.visible { opacity: 1; transform: none; }
+
+  @media (max-width: 600px) { .dual-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<nav id="main-nav">
+  <a href="#dockerignore"><span class="nav-num">00</span>.dockerignore</a>
+  <a href="#node-dockerfile"><span class="nav-num">01</span>Node Dockerfile</a>
+  <a href="#dotnet-dockerfile"><span class="nav-num">02</span>.NET Dockerfile</a>
+  <a href="#build-run"><span class="nav-num">03</span>Build &amp; Run</a>
+  <a href="#ports"><span class="nav-num">04</span>Port Mapping</a>
+  <a href="#volumes"><span class="nav-num">05</span>Volumes</a>
+  <a href="#envvars"><span class="nav-num">06</span>Env Variables</a>
+  <a href="#compose"><span class="nav-num">07</span>Docker Compose</a>
+  <a href="#quickref"><span class="nav-num">08</span>Quick Reference</a>
+  <span class="logo">🐳 docker workshop</span>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="badge">🐳 DOCKER · WORKSHOP</div>
+  <h1>من الكود للـ Container</h1>
+  <div class="pill-row">
+    <span class="pill">.dockerignore</span>
+    <span class="pill">Layer Caching</span>
+    <span class="pill">Multi-stage Build</span>
+    <span class="pill">Port Mapping</span>
+    <span class="pill">Named Volumes</span>
+    <span class="pill">Environment Variables</span>
+    <span class="pill">Docker Compose</span>
+    <span class="pill">Bridge Network</span>
+  </div>
+</div>
+
+<main class="content">
+
+<!-- ══════════════════════════════════ -->
+<!-- 0. .DOCKERIGNORE                   -->
+<!-- ══════════════════════════════════ -->
+<section class="section fade-in" id="dockerignore">
+  <h2 class="section-title">
+    <span class="num">٠</span>
+    الخطوة الصفرية — ملف الـ .dockerignore
+  </h2>
+
+  <p style="color:var(--muted); margin-bottom:1.25rem;">
+    قبل ما تكتب سطر واحد في الـ Dockerfile، في ملف صغير لازم يتعمل الأول — لو نسيته، الـ Image هتاخد وقت طويل في البناء، وفي حالات ممكن يضرب كراش كامل.
+  </p>
+
+  <!-- dockerignore diagram -->
+  <div class="diagram-box">
+    <div class="diagram-title">// diagram — ليه الـ .dockerignore ضروري قبل الـ COPY</div>
+    <svg class="diag-svg" viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="a1" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#f87171"/></marker>
+        <marker id="a2" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#22d3a0"/></marker>
+      </defs>
+
+      <!-- Your project folder -->
+      <rect x="10" y="20" width="200" height="180" rx="10" class="diag-box"/>
+      <text x="110" y="42" text-anchor="middle" font-size="10" fill="#94a3b8" font-family="IBM Plex Sans Arabic">مجلد مشروعك</text>
+      <rect x="25" y="52" width="170" height="24" rx="5" class="diag-box-blue"/>
+      <text x="110" y="68" text-anchor="middle" font-size="9" fill="#38bdf8" font-family="JetBrains Mono">src/   controllers/   server.js</text>
+      <rect x="25" y="82" width="170" height="24" rx="5" class="diag-box-blue"/>
+      <text x="110" y="98" text-anchor="middle" font-size="9" fill="#38bdf8" font-family="JetBrains Mono">package.json   .env</text>
+      <rect x="25" y="112" width="170" height="24" rx="5" class="diag-box-red"/>
+      <text x="110" y="128" text-anchor="middle" font-size="9" fill="#f87171" font-family="JetBrains Mono">node_modules/  ← 500MB+</text>
+      <rect x="25" y="142" width="170" height="24" rx="5" class="diag-box-red"/>
+      <text x="110" y="158" text-anchor="middle" font-size="9" fill="#f87171" font-family="JetBrains Mono">bin/   obj/  ← Windows DLLs</text>
+      <rect x="25" y="172" width="170" height="22" rx="5" class="diag-box-yellow"/>
+      <text x="110" y="187" text-anchor="middle" font-size="9" fill="#fbbf24" font-family="JetBrains Mono">.dockerignore</text>
+
+      <!-- Filter box -->
+      <rect x="270" y="80" width="130" height="60" rx="8" class="diag-box-yellow"/>
+      <text x="335" y="107" text-anchor="middle" font-size="11" font-weight="700" fill="#fbbf24" font-family="JetBrains Mono">.dockerignore</text>
+      <text x="335" y="126" text-anchor="middle" font-size="8" fill="#94a3b8" font-family="IBM Plex Sans Arabic">فلتر الملفات</text>
+
+      <!-- Blue allowed arrow -->
+      <line x1="198" y1="65" x2="268" y2="100" stroke="#22d3a0" stroke-width="1.5" marker-end="url(#a2)"/>
+      <line x1="198" y1="90" x2="268" y2="105" stroke="#22d3a0" stroke-width="1.5" marker-end="url(#a2)"/>
+      <!-- Red blocked arrows -->
+      <line x1="198" y1="124" x2="268" y2="115" stroke="#f87171" stroke-width="1.5" stroke-dasharray="4,3"/>
+      <line x1="198" y1="154" x2="268" y2="125" stroke="#f87171" stroke-width="1.5" stroke-dasharray="4,3"/>
+      <text x="228" y="140" text-anchor="middle" font-size="8" fill="#f87171" font-family="IBM Plex Sans Arabic">محظور ✗</text>
+
+      <!-- Container -->
+      <rect x="460" y="60" width="220" height="100" rx="10" class="diag-box-green"/>
+      <text x="570" y="82" text-anchor="middle" font-size="10" font-weight="700" fill="#22d3a0" font-family="JetBrains Mono">Docker Context</text>
+      <rect x="480" y="92" width="180" height="22" rx="5" class="diag-box-blue"/>
+      <text x="570" y="107" text-anchor="middle" font-size="9" fill="#38bdf8" font-family="JetBrains Mono">✅ src/  controllers/  server.js</text>
+      <rect x="480" y="120" width="180" height="22" rx="5" class="diag-box-blue"/>
+      <text x="570" y="135" text-anchor="middle" font-size="9" fill="#38bdf8" font-family="JetBrains Mono">✅ package.json</text>
+      <text x="570" y="155" text-anchor="middle" font-size="8" fill="#94a3b8" font-family="IBM Plex Sans Arabic">✗ node_modules — مش موجود هنا</text>
+
+      <line x1="403" y1="110" x2="457" y2="110" stroke="#22d3a0" stroke-width="1.5" marker-end="url(#a2)"/>
+    </svg>
+  </div>
+
+  <div class="dual-grid">
+    <div class="dual-card" style="border-right:3px solid var(--blue);">
+      <h3 style="color:var(--blue);">Node.js</h3>
+      <pre class="code-block" style="margin-top:.75rem;">node_modules/
+.env
+*.log
+.git</pre>
+    </div>
+    <div class="dual-card" style="border-right:3px solid var(--purple);">
+      <h3 style="color:var(--purple);">.NET</h3>
+      <pre class="code-block" style="margin-top:.75rem;">bin/
+obj/
+*.user
+.vs/</pre>
+    </div>
+  </div>
+
+  <div class="info-box red">
+    <span class="ib-icon">🔥</span>
+    <p><strong>سبب الكراش على الـ .NET:</strong> الـ <code style="font-family:JetBrains Mono; color:var(--green)">bin/</code> و<code style="font-family:JetBrains Mono; color:var(--green)">obj/</code> بيكونوا مبنيين على <strong>Windows</strong>، والكانتينر جواه <strong>Linux</strong>. الـ DLLs دي مش هتشتغل على معمارية تانية — الـ Container هيضرب كراش فوراً لو اتنسخوا.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════ -->
+<!-- 1. DOCKERFILE — NODE.JS           -->
+<!-- ══════════════════════════════════ -->
+<section class="section fade-in" id="node-dockerfile">
+  <h2 class="section-title">
+    <span class="num">١</span>
+    Dockerfile — مشروع Node.js سطر بسطر
+  </h2>
+
+  <p style="color:var(--muted); margin-bottom:1.25rem;">
+    الـ Dockerfile عبارة عن "وصفة" بنكتبها للدوكر — بنقوله فيها خطوة خطوة إزاي يبني الـ Image اللي جوا فيها مشروعنا. كل سطر بيكوّن <strong style="color:var(--text)">Layer</strong> مستقل.
+  </p>
+
+  <!-- Layer Caching diagram -->
+  <div class="diagram-box">
+    <div class="diagram-title">// diagram — Layer Caching — ليه COPY package.json قبل COPY . .</div>
+    <svg class="diag-svg" viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="ac" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#38bdf8"/></marker>
+        <marker id="ag" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#22d3a0"/></marker>
+      </defs>
+
+      <!-- First Build -->
+      <rect x="10" y="10" width="290" height="180" rx="10" fill="rgba(56,189,248,.04)" stroke="rgba(56,189,248,.25)" stroke-width="1"/>
+      <text x="155" y="30" text-anchor="middle" font-size="10" font-weight="700" fill="#38bdf8" font-family="JetBrains Mono">أول Build</text>
+      <rect x="25" y="40" width="260" height="22" rx="5" class="diag-box-blue"/>
+      <text x="155" y="55" text-anchor="middle" font-size="9" fill="#38bdf8" font-family="JetBrains Mono">FROM node:20-alpine</text>
+      <rect x="25" y="68" width="260" height="22" rx="5" class="diag-box-blue"/>
+      <text x="155" y="83" text-anchor="middle" font-size="9" fill="#38bdf8" font-family="JetBrains Mono">COPY package.json → npm install</text>
+      <text x="155" y="100" text-anchor="middle" font-size="8" fill="#fbbf24" font-family="IBM Plex Sans Arabic">⬇ ينزل المكتبات من النت (بطيء)</text>
+      <rect x="25" y="110" width="260" height="22" rx="5" class="diag-box-blue"/>
+      <text x="155" y="125" text-anchor="middle" font-size="9" fill="#38bdf8" font-family="JetBrains Mono">COPY . .  ← كود المشروع</text>
+      <rect x="25" y="138" width="260" height="32" rx="5" class="diag-box-green"/>
+      <text x="155" y="155" text-anchor="middle" font-size="9" font-weight="700" fill="#22d3a0" font-family="JetBrains Mono">✅ Image جاهزة</text>
+      <text x="155" y="168" text-anchor="middle" font-size="8" fill="#94a3b8" font-family="IBM Plex Sans Arabic">كل الـ Layers اتبنوا من أول</text>
+
+      <!-- Second Build -->
+      <rect x="400" y="10" width="290" height="180" rx="10" fill="rgba(34,211,160,.04)" stroke="rgba(34,211,160,.25)" stroke-width="1"/>
+      <text x="545" y="30" text-anchor="middle" font-size="10" font-weight="700" fill="#22d3a0" font-family="JetBrains Mono">بعد تعديل في الكود</text>
+      <rect x="415" y="40" width="260" height="22" rx="5" class="diag-box-green"/>
+      <text x="545" y="55" text-anchor="middle" font-size="9" fill="#22d3a0" font-family="JetBrains Mono">FROM node — CACHED ⚡</text>
+      <rect x="415" y="68" width="260" height="22" rx="5" class="diag-box-green"/>
+      <text x="545" y="83" text-anchor="middle" font-size="9" fill="#22d3a0" font-family="JetBrains Mono">COPY package.json — CACHED ⚡</text>
+      <text x="545" y="100" text-anchor="middle" font-size="8" fill="#22d3a0" font-family="IBM Plex Sans Arabic">package.json ما اتغيرش → npm install من الكاش</text>
+      <rect x="415" y="110" width="260" height="22" rx="5" class="diag-box-orange"/>
+      <text x="545" y="125" text-anchor="middle" font-size="9" fill="#fb923c" font-family="JetBrains Mono">COPY . .  ← هنا بس بيعيد</text>
+      <rect x="415" y="138" width="260" height="32" rx="5" class="diag-box-green"/>
+      <text x="545" y="155" text-anchor="middle" font-size="9" font-weight="700" fill="#22d3a0" font-family="JetBrains Mono">✅ Image جاهزة في ثوان</text>
+      <text x="545" y="168" text-anchor="middle" font-size="8" fill="#94a3b8" font-family="IBM Plex Sans Arabic">npm install من الكاش — ماراحش للنت</text>
+    </svg>
+  </div>
+
+  <!-- Full Node Dockerfile line by line -->
+  <div class="code-sequence">
+    <div class="code-step">
+      <div class="code-step-label">
+        <span class="step-dot blue">١</span>
+        <span class="label-text">Base Image — بيئة Linux خفيفة فيها Node</span>
+        <span class="ctx-badge docker">Dockerfile</span>
+      </div>
+      <pre class="code-block">
+<span class="ck">FROM</span> node:20-alpine   <span class="cm"># روح هات Linux خفيف + Node.js v20 جاهز</span>
+</pre>
+    </div>
+    <div class="code-step">
+      <div class="code-step-label">
+        <span class="step-dot green">٢</span>
+        <span class="label-text">WORKDIR — مجلد الشغل داخل الكانتينر</span>
+        <span class="ctx-badge docker">Dockerfile</span>
+      </div>
+      <pre class="code-block">
+<span class="ck">WORKDIR</span> /app         <span class="cm"># اعمل فولدر /app واجعله المجلد الرئيسي</span>
+                     <span class="cm"># أي أمر جاي هيتنفذ من جواه</span>
+</pre>
+    </div>
+    <div class="code-step">
+      <div class="code-step-label">
+        <span class="step-dot yellow">٣</span>
+        <span class="label-text">COPY package.json أولاً — سر الـ Layer Caching</span>
+        <span class="ctx-badge docker">Dockerfile</span>
+      </div>
+      <pre class="code-block">
+<span class="ck">COPY</span> package*.json ./   <span class="cm"># انسخ package.json و package-lock.json بس</span>
+<span class="ck">RUN</span> npm install         <span class="cm"># نزّل المكتبات — layer مستقلة في الكاش</span>
+                         <span class="cm"># لو package.json ما اتغيرش، السطر ده من الكاش ⚡</span>
+</pre>
+    </div>
+    <div class="code-step">
+      <div class="code-step-label">
+        <span class="step-dot orange">٤</span>
+        <span class="label-text">COPY الكود — بعد ما المكتبات اتنزلت</span>
+        <span class="ctx-badge docker">Dockerfile</span>
+      </div>
+      <pre class="code-block">
+<span class="ck">COPY</span> . .   <span class="cm"># انسخ كل كود المشروع (.dockerignore هيحجب node_modules)</span>
+</pre>
+    </div>
+    <div class="code-step">
+      <div class="code-step-label">
+        <span class="step-dot purple">٥</span>
+        <span class="label-text">EXPOSE و CMD — توثيق ثم تشغيل</span>
+        <span class="ctx-badge docker">Dockerfile</span>
+      </div>
+      <pre class="code-block">
+<span class="ck">EXPOSE</span> 3000                       <span class="cm"># توثيق فقط — الـ App بتسمع على البورت ده</span>
+<span class="ck">CMD</span> [<span class="cy">"node"</span>, <span class="cy">"server.js"</span>]       <span class="cm"># الأمر اللي هيشتغل لما الكانتينر يقوم</span>
+                                   <span class="cm"># RUN = وقت البناء | CMD = وقت التشغيل</span>
+</pre>
+    </div>
+  </div>
+
+  <div class="term-list" style="margin-top:1.5rem;">
+    <div class="term-row">
+      <span class="term-label blue">FROM</span>
+      <span class="term-desc">بداية كل Dockerfile — بتحدد الـ Base Image اللي هتبني عليها. <code style="font-family:JetBrains Mono; color:var(--green)">alpine</code> = نسخة Linux خفيفة جداً.</span>
+    </div>
+    <div class="term-row">
+      <span class="term-label green">WORKDIR</span>
+      <span class="term-desc">بيعمل مجلد جوه الكانتينر ويخليه الـ current directory لكل الأوامر الجاية. بيمنع الفوضى في الـ root.</span>
+    </div>
+    <div class="term-row">
+      <span class="term-label yellow">COPY</span>
+      <span class="term-desc">بينسخ ملفات من جهازك لجوه الكانتينر. الترتيب مهم جداً بسبب الـ Layer Caching.</span>
+    </div>
+    <div class="term-row">
+      <span class="term-label orange">RUN</span>
+      <span class="term-desc">بيشغّل أمر <strong>وقت بناء الـ Image</strong>. الناتج بيتحفظ كـ Layer في الكاش.</span>
+    </div>
+    <div class="term-row">
+      <span class="term-label purple">CMD</span>
+      <span class="term-desc">الأمر اللي بيتشغّل <strong>وقت تشغيل الكانتينر</strong> — مش وقت البناء. ممكن يتـ Override من بره.</span>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════ -->
+<!-- 2. DOCKERFILE — .NET MULTI-STAGE  -->
+<!-- ══════════════════════════════════ -->
+<section class="section fade-in" id="dotnet-dockerfile">
+  <h2 class="section-title">
+    <span class="num">٢</span>
+    Dockerfile .NET — Multi-stage Build
+  </h2>
+
+  <p style="color:var(--muted); margin-bottom:1.25rem;">
+    في الـ .NET الكود C# لازم يتعمل Compile لـ DLL قبل ما يشتغل. لو استخدمنا الـ SDK الكامل في الـ Production، الـ Image هتوصل لـ <strong style="color:var(--red)">1 جيجا</strong>. الحل هو تقسيم الـ Dockerfile لمرحلتين.
+  </p>
+
+  <!-- Multi-stage concept diagram -->
+  <div class="diagram-box">
+    <div class="diagram-title">// diagram — Multi-stage Build — مطبخ مؤقت + بيئة خفيفة نهائية</div>
+    <svg class="diag-svg" viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="ms1" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#38bdf8"/></marker>
+        <marker id="ms2" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#fbbf24"/></marker>
+        <marker id="ms3" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#22d3a0"/></marker>
+      </defs>
+
+      <!-- Stage 1: Build -->
+      <rect x="10" y="10" width="285" height="215" rx="12" class="diag-box-blue"/>
+      <text x="152" y="32" text-anchor="middle" font-size="11" font-weight="700" fill="#38bdf8" font-family="JetBrains Mono">المرحلة ١ — build-env</text>
+      <text x="152" y="50" text-anchor="middle" font-size="8" fill="#64748b" font-family="IBM Plex Sans Arabic">SDK كامل ~700MB (مطبخ مؤقت)</text>
+
+      <rect x="25" y="60" width="255" height="26" rx="5" class="diag-box"/>
+      <text x="152" y="77" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="JetBrains Mono">FROM dotnet/sdk:8.0 AS build-env</text>
+
+      <rect x="25" y="92" width="255" height="26" rx="5" class="diag-box"/>
+      <text x="152" y="109" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="JetBrains Mono">COPY .csproj → dotnet restore</text>
+      <text x="152" y="126" text-anchor="middle" font-size="7" fill="#fbbf24" font-family="IBM Plex Sans Arabic">⚡ Layer Caching — NuGet من الكاش</text>
+
+      <rect x="25" y="132" width="255" height="26" rx="5" class="diag-box"/>
+      <text x="152" y="149" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="JetBrains Mono">COPY . ./  →  dotnet publish -c Release</text>
+
+      <rect x="25" y="165" width="255" height="46" rx="5" class="diag-box-yellow"/>
+      <text x="152" y="183" text-anchor="middle" font-size="10" font-weight="700" fill="#fbbf24" font-family="JetBrains Mono">📁 /app/out</text>
+      <text x="152" y="200" text-anchor="middle" font-size="8" fill="#94a3b8" font-family="IBM Plex Sans Arabic">DLLs جاهزة للتشغيل — مش محتاج SDK تاني</text>
+
+      <!-- Steal arrow -->
+      <line x1="298" y1="188" x2="370" y2="150" stroke="#fbbf24" stroke-width="2" stroke-dasharray="6,3" marker-end="url(#ms2)"/>
+      <text x="335" y="177" text-anchor="middle" font-size="8" fill="#fbbf24" font-family="JetBrains Mono">COPY --from=build-env</text>
+
+      <!-- Stage 2: Runtime -->
+      <rect x="373" y="60" width="315" height="165" rx="12" class="diag-box-green"/>
+      <text x="530" y="82" text-anchor="middle" font-size="11" font-weight="700" fill="#22d3a0" font-family="JetBrains Mono">المرحلة ٢ — Runtime</text>
+      <text x="530" y="99" text-anchor="middle" font-size="8" fill="#64748b" font-family="IBM Plex Sans Arabic">aspnet Runtime فقط ~100MB</text>
+
+      <rect x="390" y="110" width="280" height="26" rx="5" class="diag-box"/>
+      <text x="530" y="127" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="JetBrains Mono">FROM dotnet/aspnet:8.0</text>
+
+      <rect x="390" y="142" width="280" height="26" rx="5" class="diag-box-yellow"/>
+      <text x="530" y="159" text-anchor="middle" font-size="9" fill="#fbbf24" font-family="JetBrains Mono">COPY --from=build-env /app/out .</text>
+
+      <rect x="390" y="174" width="280" height="38" rx="5" class="diag-box-green"/>
+      <text x="530" y="190" text-anchor="middle" font-size="10" font-weight="700" fill="#22d3a0" font-family="JetBrains Mono">🚀 ENTRYPOINT dotnet App.dll</text>
+      <text x="530" y="206" text-anchor="middle" font-size="8" fill="#94a3b8" font-family="IBM Plex Sans Arabic">Image نهائية ~200MB بدل 1GB</text>
+    </svg>
+  </div>
+
+  <!-- Full .NET Dockerfile -->
+  <div class="code-sequence">
+    <div class="code-step">
+      <div class="code-step-label">
+        <span class="step-dot blue">١</span>
+        <span class="label-text">Build Stage — SDK ضخم كـ "مطبخ مؤقت"</span>
+        <span class="ctx-badge docker">Dockerfile</span>
+      </div>
+      <pre class="code-block">
+<span class="cm"># ── المرحلة الأولى: بيئة البناء ──────────────────────────────</span>
+<span class="ck">FROM</span> mcr.microsoft.com/dotnet/sdk:8.0 <span class="ck">AS</span> <span class="co">build-env</span>
+<span class="cm">#    ↑ SDK كامل ~700MB               ↑ اسم مستعار نستخدمه بعدين</span>
+<span class="ck">WORKDIR</span> /src
+
+<span class="ck">COPY</span> DotnetApp.csproj ./              <span class="cm"># انسخ ملف المشروع بس الأول</span>
+<span class="ck">RUN</span> dotnet restore                    <span class="cm"># نزّل NuGet Packages — Layer كاش</span>
+
+<span class="ck">COPY</span> . ./                             <span class="cm"># دلوقتي انسخ كل الكود</span>
+<span class="ck">RUN</span> dotnet publish -c Release -o /app/out
+<span class="cm">#                   ↑ Release mode  ↑ اكتب الـ Output هنا</span>
+</pre>
+    </div>
+    <div class="code-step">
+      <div class="code-step-label">
+        <span class="step-dot green">٢</span>
+        <span class="label-text">Run Stage — Runtime خفيف + سرقة الناتج من المرحلة الأولى</span>
+        <span class="ctx-badge docker">Dockerfile</span>
+      </div>
+      <pre class="code-block">
+<span class="cm"># ── المرحلة الثانية: بيئة التشغيل ───────────────────────────</span>
+<span class="ck">FROM</span> mcr.microsoft.com/dotnet/aspnet:8.0
+<span class="cm">#    ↑ Runtime بس ~100MB — مفيش Compiler هنا</span>
+<span class="ck">WORKDIR</span> /app
+
+<span class="ck">COPY</span> --from=<span class="co">build-env</span> /app/out .
+<span class="cm">#    ↑ روح للمرحلة الأولى وخد الـ Output منها</span>
+<span class="cm">#    الـ SDK الـ 700MB اترمى في الزبالة — ما بيجيش في الـ Image النهائية</span>
+
+<span class="ck">EXPOSE</span> 8080
+<span class="ck">ENTRYPOINT</span> [<span class="cy">"dotnet"</span>, <span class="cy">"DotnetApp.dll"</span>]
+<span class="cm">#  ↑ ENTRYPOINT = أمر ثابت مش ممكن يتغير بالخطأ من بره (أقوى من CMD)</span>
+</pre>
+    </div>
+  </div>
+
+  <div class="info-box green">
+    <span class="ib-icon">📊</span>
+    <p>النتيجة العملية للـ Multi-stage Build: الـ Image النهائية بتنزل من <strong style="color:var(--red)">~1 GB</strong> لـ <strong style="color:var(--green)">~200 MB</strong> — لأن الـ SDK الكامل وكل ملفات البناء بتتمسح بشكل أوتوماتيكي ومش بتيجي في الـ Image النهائية.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════ -->
+<!-- 3. BUILD & RUN                    -->
+<!-- ══════════════════════════════════ -->
+<section class="section fade-in" id="build-run">
+  <h2 class="section-title">
+    <span class="num">٣</span>
+    Build &amp; Run — من الكود لكانتينر شغّال
+  </h2>
+
+  <p style="color:var(--muted); margin-bottom:1.25rem;">
+    الـ Dockerfile كتالوج مكتوب بس — عشان يتحوّل لـ Image حقيقية وبعدين كانتينر شغّال، بنستخدم أمرين أساسيين.
+  </p>
+
+  <!-- Build command breakdown -->
+  <div class="diagram-box">
+    <div class="diagram-title">// diagram — تشريح أمر docker build</div>
+    <svg class="diag-svg" viewBox="0 0 700 160" xmlns="http://www.w3.org/2000/svg">
+      <!-- Command bar -->
+      <rect x="10" y="15" width="680" height="55" rx="8" class="diag-box"/>
+      <text x="355" y="49" text-anchor="middle" font-size="16" font-weight="600" fill="#e2e8f0" font-family="JetBrains Mono">docker build -t node-api .</text>
+
+      <!--
+        JetBrains Mono font-size=16 → ~9.6px per char (≈10px).
+        "docker build -t node-api ." = 27 chars → ~270px wide, centred at x=355
+        Left edge ≈ 355 - 135 = 220
+
+        Char positions (cumulative):
+          d-o-c-k-e-r        = 6  → 220–279  centre=249
+          (space)            = 1  → 280
+          b-u-i-l-d         = 5  → 281–329  centre=305
+          (space)            = 1  → 330
+          -t                 = 2  → 331–349  centre=340
+          (space)            = 1  → 350
+          n-o-d-e---a-p-i   = 8  → 351–429  centre=390
+          (space)            = 1  → 430
+          .                  = 1  → 431–439  centre=435
+      -->
+
+      <!-- Pointer lines — straight down from word centres -->
+      <!-- docker: x=249 -->
+      <line x1="249" y1="70" x2="249" y2="105" stroke="#38bdf8" stroke-width="1.5"/>
+      <!-- -t: x=340 -->
+      <line x1="340" y1="70" x2="340" y2="120" stroke="#fbbf24" stroke-width="1.5"/>
+      <!-- node-api: x=390 -->
+      <line x1="390" y1="70" x2="390" y2="105" stroke="#fbbf24" stroke-width="1.5"/>
+      <!-- . : x=435 -->
+      <line x1="435" y1="70" x2="435" y2="120" stroke="#22d3a0" stroke-width="1.5"/>
+
+      <!-- Labels — staggered heights so text never overlaps -->
+      <!-- docker → short line → label at y=115 -->
+      <text x="249" y="118" text-anchor="middle" font-size="10" fill="#38bdf8" font-family="IBM Plex Sans Arabic">ابني Image</text>
+
+      <!-- -t → longer line → label at y=132 -->
+      <text x="340" y="134" text-anchor="middle" font-size="10" fill="#fbbf24" font-family="IBM Plex Sans Arabic">سمّي الـ Image</text>
+
+      <!-- node-api → short line → label at y=115 -->
+      <text x="390" y="118" text-anchor="middle" font-size="10" fill="#fbbf24" font-family="IBM Plex Sans Arabic">اسم الـ Image</text>
+
+      <!-- . → longer line → label at y=132 -->
+      <text x="435" y="134" text-anchor="middle" font-size="10" fill="#22d3a0" font-family="IBM Plex Sans Arabic">الكود في المجلد ده</text>
+    </svg>
+  </div>
+
+  <div class="code-sequence">
+    <div class="code-step">
+      <div class="code-step-label">
+        <span class="step-dot blue">١</span>
+        <span class="label-text">بناء الـ Image لكل مشروع</span>
+        <span class="ctx-badge terminal">Terminal</span>
+      </div>
+      <pre class="code-block">
+<span class="cm"># مشروع Node.js</span>
+docker build -t node-api .
+
+<span class="cm"># مشروع .NET (من داخل فولدر المشروع)</span>
+docker build -t dotnet-api .
+</pre>
+    </div>
+    <div class="code-step">
+      <div class="code-step-label">
+        <span class="step-dot green">٢</span>
+        <span class="label-text">التحقق من الـ Layer Caching</span>
+        <span class="ctx-badge terminal">Terminal Output</span>
+      </div>
+      <pre class="code-block">
+<span class="cm"># لما تشوف ده في الـ Terminal:</span>
+<span class="cp"> => CACHED [2/5] WORKDIR /app                          0.0s</span>
+<span class="cp"> => CACHED [3/5] COPY package*.json ./                 0.0s</span>
+<span class="cp"> => CACHED [4/5] RUN npm install                       0.0s</span>
+<span class="co"> => [5/5] COPY . .                                     0.3s</span>
+
+<span class="cm"># ده معناه: بس السطر الأخير اتنفذ من أول — الباقي من الكاش ⚡</span>
+</pre>
+    </div>
+    <div class="code-step">
+      <div class="code-step-label">
+        <span class="step-dot orange">٣</span>
+        <span class="label-text">تشغيل الـ Image كـ Container</span>
+        <span class="ctx-badge terminal">Terminal</span>
+      </div>
+      <pre class="code-block">
+docker run -d  -p 5000:3000  --name my-node-container  node-api
+<span class="cm">#          ↑   ↑             ↑                          ↑</span>
+<span class="cm">#       خلفية  Ports     اسم الكانتينر             اسم الـ Image</span>
+</pre>
+    </div>
+  </div>
+
+  <div class="term-list" style="margin-top:1rem;">
+    <div class="term-row">
+      <span class="term-label green">-t node-api</span>
+      <span class="term-desc"><code style="font-family:JetBrains Mono">-t</code> = Tag. بنسمي الـ Image اسم مفهوم بدل رقم عشوائي. بعدين نكتب الاسم ده في <code style="font-family:JetBrains Mono; color:var(--green)">docker run</code>.</span>
+    </div>
+    <div class="term-row">
+      <span class="term-label orange">-d</span>
+      <span class="term-desc">Detached Mode — الكانتينر يشتغل في الخلفية ويسيب الـ Terminal حر. بدونها الـ Terminal بيتـ lock.</span>
+    </div>
+    <div class="term-row">
+      <span class="term-label purple">--name</span>
+      <span class="term-desc">اسم دلع للكانتينر الشغّال — بيسهّل الـ <code style="font-family:JetBrains Mono; color:var(--green)">docker stop</code> و<code style="font-family:JetBrains Mono; color:var(--green)">docker rm</code> بعدين.</span>
+    </div>
+    <div class="term-row">
+      <span class="term-label blue">docker ps</span>
+      <span class="term-desc">يعرض كشف بكل الكانتينرات الشغالة حالياً مع البورتات والأسماء والـ IDs.</span>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════ -->
+<!-- 4. PORT MAPPING                   -->
+<!-- ══════════════════════════════════ -->
+<section class="section fade-in" id="ports">
+  <h2 class="section-title">
+    <span class="num">٤</span>
+    Port Mapping — فك لغز العزلة
+  </h2>
+
+  <p style="color:var(--muted); margin-bottom:1.25rem;">
+    الكانتينر لما يقوم بيبقى <strong style="color:var(--text)">معزول تماماً</strong> — ملوش باب على العالم الخارجي. الـ Port Mapping هو اللي بيفتحله نافذة يطل منها.
+  </p>
+
+  <!-- Port mapping "pipe" diagram -->
+  <div class="diagram-box">
+    <div class="diagram-title">// diagram — الـ -p كـ "ماسورة" بين جهازك والكانتينر</div>
+    <svg class="diag-svg" viewBox="0 0 700 180" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="ap" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#38bdf8"/></marker>
+        <marker id="ap2" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#22d3a0"/></marker>
+      </defs>
+
+      <!-- Browser -->
+      <rect x="10" y="55" width="130" height="70" rx="8" class="diag-box"/>
+      <text x="75" y="84" text-anchor="middle" font-size="10" fill="#94a3b8" font-family="IBM Plex Sans Arabic">المتصفح</text>
+      <text x="75" y="102" text-anchor="middle" font-size="9" fill="#38bdf8" font-family="JetBrains Mono">localhost:5000</text>
+
+      <line x1="143" y1="90" x2="168" y2="90" stroke="#38bdf8" stroke-width="2" marker-end="url(#ap)"/>
+
+      <!-- Host OS port -->
+      <rect x="170" y="65" width="100" height="50" rx="8" class="diag-box-blue"/>
+      <text x="220" y="86" text-anchor="middle" font-size="10" font-weight="700" fill="#38bdf8" font-family="JetBrains Mono">:5000</text>
+      <text x="220" y="103" text-anchor="middle" font-size="8" fill="#94a3b8" font-family="IBM Plex Sans Arabic">جهازك</text>
+
+      <!-- Pipe visual -->
+      <rect x="272" y="82" width="155" height="18" rx="4" fill="rgba(251,146,60,.2)" stroke="rgba(251,146,60,.5)" stroke-width="1"/>
+      <text x="350" y="95" text-anchor="middle" font-size="8" fill="#fb923c" font-family="JetBrains Mono">-p 5000:3000 (الماسورة)</text>
+
+      <line x1="430" y1="90" x2="455" y2="90" stroke="#22d3a0" stroke-width="2" marker-end="url(#ap2)"/>
+
+      <!-- Container wall -->
+      <rect x="458" y="20" width="230" height="140" rx="10" class="diag-box-green"/>
+      <text x="573" y="42" text-anchor="middle" font-size="9" fill="#22d3a0" font-family="JetBrains Mono">Container (معزول)</text>
+
+      <rect x="470" y="55" width="95" height="50" rx="8" class="diag-box-green" style="fill:rgba(34,211,160,.2)"/>
+      <text x="517" y="76" text-anchor="middle" font-size="10" font-weight="700" fill="#22d3a0" font-family="JetBrains Mono">:3000</text>
+      <text x="517" y="93" text-anchor="middle" font-size="8" fill="#94a3b8" font-family="IBM Plex Sans Arabic">App Port</text>
+
+      <rect x="572" y="55" width="100" height="75" rx="8" class="diag-box"/>
+      <text x="622" y="78" text-anchor="middle" font-size="10" fill="#e2e8f0" font-family="JetBrains Mono">Node.js</text>
+      <text x="622" y="95" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="IBM Plex Sans Arabic">App</text>
+      <text x="622" y="114" text-anchor="middle" font-size="8" fill="#64748b" font-family="JetBrains Mono">server.js</text>
+
+      <line x1="567" y1="80" x2="570" y2="80" stroke="#22d3a0" stroke-width="1.5" marker-end="url(#ap2)"/>
+
+      <!-- Labels -->
+      <text x="220" y="145" text-anchor="middle" font-size="8" fill="#64748b" font-family="IBM Plex Sans Arabic">HOST PORT (جهازك)</text>
+      <text x="510" y="155" text-anchor="middle" font-size="8" fill="#64748b" font-family="IBM Plex Sans Arabic">CONTAINER PORT (جوه)</text>
+    </svg>
+  </div>
+
+  <div class="code-sequence">
+    <div class="code-step">
+      <div class="code-step-label">
+        <span class="step-dot blue">Node</span>
+        <span class="label-text">تشغيل Node API — جهازك:5000 → الكانتينر:3000</span>
+        <span class="ctx-badge terminal">Terminal</span>
+      </div>
+      <pre class="code-block">
+docker run -d -p 5000:3000 --name my-node-container node-api
+<span class="cm">#              ↑    ↑</span>
+<span class="cm">#         HOST:5000  CONTAINER:3000</span>
+<span class="cm"># افتح المتصفح على: http://localhost:5000</span>
+</pre>
+    </div>
+    <div class="code-step">
+      <div class="code-step-label">
+        <span class="step-dot purple">.NET</span>
+        <span class="label-text">تشغيل .NET API — جهازك:8080 → الكانتينر:8080</span>
+        <span class="ctx-badge terminal">Terminal</span>
+      </div>
+      <pre class="code-block">
+docker run -d -p 8080:8080 --name my-dotnet-container dotnet-api
+<span class="cm"># افتح المتصفح على: http://localhost:8080</span>
+</pre>
+    </div>
+  </div>
+
+  <div class="quote-box">
+    الـ <strong>-p HOST:CONTAINER</strong> زي الماسورة — الطلب بيجي من المتصفح على البورت بتاع جهازك، الماسورة بتحدفه جوه الكانتينر على البورت الداخلي. الكانتينر نفسه ما يعرفش إنه معزول — يشوف الطلب جاي عادي.
+  </div>
+</section>
+
+<!-- ══════════════════════════════════ -->
+<!-- 5. VOLUMES — DATA PERSISTENCE     -->
+<!-- ══════════════════════════════════ -->
+<section class="section fade-in" id="volumes">
+  <h2 class="section-title">
+    <span class="num">٥</span>
+    Volumes — الداتا لازم تعيش بعد الكانتينر
+  </h2>
+
+  <p style="color:var(--muted); margin-bottom:1.25rem;">
+    في قاعدة ذهبية في Docker: <strong style="color:var(--text)">Containers are ephemeral</strong> — الكانتينرات كائنات مؤقتة. أي داتا بتتكتب جواها، لو الكانتينر اتمسح، <strong style="color:var(--red)">الداتا بتتمسح معاه للأبد</strong>.
+  </p>
+
+  <!-- Ephemeral vs Volume diagram -->
+  <div class="diagram-box">
+    <div class="diagram-title">// diagram — الكارثة بدون Volumes والحل بيها</div>
+    <svg class="diag-svg" viewBox="0 0 700 230" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="av1" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#f87171"/></marker>
+        <marker id="av2" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#22d3a0"/></marker>
+      </defs>
+
+      <!-- WITHOUT Volume — PROBLEM -->
+      <rect x="10" y="10" width="310" height="210" rx="10" fill="rgba(248,113,113,.04)" stroke="rgba(248,113,113,.3)" stroke-width="1"/>
+      <text x="165" y="32" text-anchor="middle" font-size="11" font-weight="700" fill="#f87171" font-family="JetBrains Mono">❌ بدون Volume</text>
+
+      <rect x="25" y="45" width="280" height="55" rx="8" class="diag-box"/>
+      <text x="165" y="68" text-anchor="middle" font-size="10" fill="#e2e8f0" font-family="JetBrains Mono">Container #1</text>
+      <text x="165" y="86" text-anchor="middle" font-size="9" fill="#22d3a0" font-family="JetBrains Mono">data.txt — "كتبت جوا الكانتينر"</text>
+
+      <text x="165" y="118" text-anchor="middle" font-size="12" fill="#f87171">docker stop + docker rm</text>
+
+      <rect x="25" y="130" width="280" height="55" rx="8" class="diag-box-red"/>
+      <text x="165" y="153" text-anchor="middle" font-size="10" fill="#f87171" font-family="JetBrains Mono">Container #2 (جديد)</text>
+      <text x="165" y="171" text-anchor="middle" font-size="9" fill="#94a3b8" font-family="JetBrains Mono">data.txt — مش موجود 😱</text>
+
+      <text x="165" y="205" text-anchor="middle" font-size="9" fill="#f87171" font-family="IBM Plex Sans Arabic">الداتا ضاعت مع الكانتينر للأبد</text>
+
+      <!-- WITH Volume — SOLUTION -->
+      <rect x="380" y="10" width="310" height="210" rx="10" fill="rgba(34,211,160,.04)" stroke="rgba(34,211,160,.3)" stroke-width="1"/>
+      <text x="535" y="32" text-anchor="middle" font-size="11" font-weight="700" fill="#22d3a0" font-family="JetBrains Mono">✅ مع Named Volume</text>
+
+      <!-- Volume on host -->
+      <rect x="395" y="45" width="280" height="38" rx="8" class="diag-box-yellow"/>
+      <text x="535" y="63" text-anchor="middle" font-size="10" font-weight="700" fill="#fbbf24" font-family="JetBrains Mono">my-secure-data (Volume على جهازك)</text>
+      <text x="535" y="78" text-anchor="middle" font-size="8" fill="#94a3b8" font-family="IBM Plex Sans Arabic">مستقل تماماً — بيعيش بعد الكانتينر</text>
+
+      <!-- Container 1 with volume -->
+      <rect x="395" y="92" width="130" height="50" rx="6" class="diag-box"/>
+      <text x="460" y="113" text-anchor="middle" font-size="9" fill="#e2e8f0" font-family="JetBrains Mono">Container #1</text>
+      <text x="460" y="129" text-anchor="middle" font-size="8" fill="#22d3a0" font-family="JetBrains Mono">/app/data ↔ Volume</text>
+
+      <line x1="460" y1="90" x2="460" y2="89" stroke="#fbbf24" stroke-width="1.5"/>
+      <line x1="460" y1="142" x2="460" y2="165" stroke="#f87171" stroke-width="1.5" stroke-dasharray="3,3" marker-end="url(#av1)"/>
+      <text x="460" y="178" text-anchor="middle" font-size="8" fill="#f87171" font-family="JetBrains Mono">اتمسح</text>
+
+      <!-- Container 2 with volume -->
+      <rect x="535" y="92" width="140" height="50" rx="6" class="diag-box-green"/>
+      <text x="605" y="113" text-anchor="middle" font-size="9" fill="#22d3a0" font-family="JetBrains Mono">Container #2 (جديد)</text>
+      <text x="605" y="129" text-anchor="middle" font-size="8" fill="#22d3a0" font-family="JetBrains Mono">/app/data ↔ Volume ✅</text>
+
+      <line x1="535" y1="62" x2="535" y2="92" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="3,3" marker-end="url(#av2)"/>
+      <line x1="605" y1="62" x2="605" y2="92" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="3,3" marker-end="url(#av2)"/>
+
+      <text x="535" y="210" text-anchor="middle" font-size="9" fill="#22d3a0" font-family="IBM Plex Sans Arabic">الداتا محتفظ بيها في الـ Volume ✅</text>
+    </svg>
+  </div>
+
+  <!-- Volume commands -->
+  <div class="code-sequence">
+    <div class="code-step">
+      <div class="code-step-label">
+        <span class="step-dot red">١</span>
+        <span class="label-text">إثبات الكارثة — ادخل الكانتينر واكتب ملف ثم امسحه</span>
+        <span class="ctx-badge terminal">Terminal</span>
+      </div>
+      <pre class="code-block">
+<span class="cm"># ادخل جوه الكانتينر الشغّال</span>
+docker exec -it my-node-container sh
+
+<span class="cm"># اكتب ملف جوا</span>
+echo "Mohamed Ehab was here" > data.txt
+exit
+
+<span class="cm"># امسح الكانتينر كامل</span>
+docker stop my-node-container
+docker rm my-node-container
+
+<span class="cm"># شغّل كانتينر جديد وافتش على الملف</span>
+docker run -d -p 5000:3000 --name my-node-container node-api
+docker exec -it my-node-container ls
+<span class="cr"># data.txt مش موجود — الداتا راحت 💀</span>
+</pre>
+    </div>
+    <div class="code-step">
+      <div class="code-step-label">
+        <span class="step-dot green">٢</span>
+        <span class="label-text">إنشاء Volume وربطه بالكانتينر</span>
+        <span class="ctx-badge terminal">Terminal</span>
+      </div>
+      <pre class="code-block">
+<span class="cm"># إنشاء Volume مستقل</span>
+docker volume create my-secure-data
+
+<span class="cm"># شغّل الكانتينر مع الـ Volume</span>
+docker run -d -p 5000:3000 \
+  -v my-secure-data:/app/data \
+  --name my-node-container node-api
+<span class="cm">#  ↑</span>
+<span class="cm">#  my-secure-data (على جهازك) ↔ /app/data (جوه الكانتينر)</span>
+</pre>
+    </div>
+    <div class="code-step">
+      <div class="code-step-label">
+        <span class="step-dot yellow">٣</span>
+        <span class="label-text">الإثبات — امسح الكانتينر وشوف الداتا لسه موجودة</span>
+        <span class="ctx-badge terminal">Terminal</span>
+      </div>
+      <pre class="code-block">
+<span class="cm"># اكتب داتا جوه فولدر الـ Volume</span>
+docker exec -it my-node-container sh
+cd data && echo "Database is safe now!" > backup.txt
+exit
+
+<span class="cm"># امسح الكانتينر تماماً</span>
+docker stop my-node-container && docker rm my-node-container
+
+<span class="cm"># شغّل كانتينر جديد بنفس الـ Volume</span>
+docker run -d -p 5000:3000 \
+  -v my-secure-data:/app/data \
+  --name my-new-container node-api
+
+<span class="cm"># افتش على الداتا</span>
+docker exec -it my-new-container cat /app/data/backup.txt
+<span class="cp"># Output: Database is safe now! 🎉</span>
+</pre>
+    </div>
+  </div>
+
+  <div class="info-box blue">
+    <span class="ib-icon">💡</span>
+    <p>ده نفس التكنيك اللي بنأمن بيه <strong>SQL Server</strong> و<strong>MongoDB</strong> في الشغل الحقيقي. الـ Database Container ممكن يتمسح ويتعمل Update — والداتا مش هتتأثر لأنها في Volume منفصل.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════ -->
+<!-- 6. ENVIRONMENT VARIABLES          -->
+<!-- ══════════════════════════════════ -->
+<section class="section fade-in" id="envvars">
+  <h2 class="section-title">
+    <span class="num">٦</span>
+    Environment Variables — إعدادات ديناميكية بدون Build جديد
+  </h2>
+
+  <p style="color:var(--muted); margin-bottom:1.25rem;">
+    بدل ما نكتب الـ Connection Strings والبورتات جوه الكود مباشرة (Hardcoded)، بنخلي الدوكر يـ inject القيم دي من بره وقت التشغيل — من غير ما نفتح الـ VS Code ونعمل Build جديدة.
+  </p>
+
+  <!-- Env var injection diagram -->
+  <div class="diagram-box">
+    <div class="diagram-title">// diagram — حقن Environment Variables من بره الكانتينر</div>
+    <svg class="diag-svg" viewBox="0 0 700 160" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="ae" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#a78bfa"/></marker>
+      </defs>
+
+      <!-- -e flag source -->
+      <rect x="10" y="40" width="230" height="80" rx="8" class="diag-box-purple"/>
+      <text x="115" y="64" text-anchor="middle" font-size="10" font-weight="700" fill="#a78bfa" font-family="JetBrains Mono">docker run -e PORT=7000</text>
+      <text x="115" y="82" text-anchor="middle" font-size="8" fill="#94a3b8" font-family="IBM Plex Sans Arabic">بتحقن المتغير في الكانتينر</text>
+      <text x="115" y="100" text-anchor="middle" font-size="8" fill="#94a3b8" font-family="IBM Plex Sans Arabic">وقت التشغيل — مش وقت البناء</text>
+
+      <line x1="243" y1="80" x2="288" y2="80" stroke="#a78bfa" stroke-width="1.5" marker-end="url(#ae)"/>
+
+      <!-- Container -->
+      <rect x="292" y="20" width="400" height="120" rx="10" class="diag-box"/>
+      <text x="492" y="42" text-anchor="middle" font-size="10" fill="#94a3b8" font-family="IBM Plex Sans Arabic">جوه الكانتينر</text>
+      <rect x="310" y="55" width="175" height="35" rx="6" class="diag-box-purple"/>
+      <text x="397" y="72" text-anchor="middle" font-size="9" fill="#a78bfa" font-family="JetBrains Mono">process.env.PORT = 7000</text>
+      <text x="397" y="85" text-anchor="middle" font-size="8" fill="#94a3b8" font-family="IBM Plex Sans Arabic">Node.js شايف المتغير</text>
+      <rect x="500" y="55" width="175" height="35" rx="6" class="diag-box-purple"/>
+      <text x="587" y="70" text-anchor="middle" font-size="9" fill="#a78bfa" font-family="JetBrains Mono">ConnectionStrings</text>
+      <text x="587" y="84" text-anchor="middle" font-size="8" fill="#94a3b8" font-family="IBM Plex Sans Arabic">.NET configuration</text>
+      <text x="492" y="125" text-anchor="middle" font-size="8" fill="#64748b" font-family="IBM Plex Sans Arabic">الكود نفسه ما اتغيرش — بس السلوك تغير</text>
+    </svg>
+  </div>
+
+  <div class="code-sequence">
+    <div class="code-step">
+      <div class="code-step-label">
+        <span class="step-dot blue">Node</span>
+        <span class="label-text">تغيير البورت ديناميكياً بدون Build جديدة</span>
+        <span class="ctx-badge terminal">Terminal</span>
+      </div>
+      <pre class="code-block">
+<span class="cm"># الكود بياخد البورت من env: process.env.PORT || 3000</span>
+docker run -d -p 8000:7000 -e PORT=7000 --name node-dynamic node-api
+<span class="cm">#                           ↑</span>
+<span class="cm">#    حقنّا PORT=7000 جوه الكانتينر — الـ Node هيقرأه أوتوماتيك</span>
+<span class="cm"># افتح: http://localhost:8000</span>
+</pre>
+    </div>
+    <div class="code-step">
+      <div class="code-step-label">
+        <span class="step-dot purple">.NET</span>
+        <span class="label-text">تغيير الـ Connection String بالـ Double Underscore</span>
+        <span class="ctx-badge terminal">Terminal</span>
+      </div>
+      <pre class="code-block">
+docker run -d -p 8080:8080 \
+  -e ConnectionStrings__DefaultConnection=<span class="cy">"Server=LiveServer;Database=SchoolDb;User Id=sa;Password=StrongPass!;"</span> \
+  dotnet-api
+<span class="cm">#              ↑</span>
+<span class="cm"># ConnectionStrings:DefaultConnection في appsettings.json</span>
+<span class="cm"># بيتكتب في الـ env بـ __ (Double Underscore) بدل : (Colon)</span>
+<span class="cm"># لأن الـ Linux مش بيفهم : في أسماء المتغيرات</span>
+</pre>
+    </div>
+  </div>
+
+  <div class="info-box orange">
+    <span class="ib-icon">🔑</span>
+    <p>تريكة الـ <code style="font-family:JetBrains Mono; color:var(--green)">__</code> (Double Underscore): في الـ appsettings.json المفاتيح بتبقى متداخلة <code style="font-family:JetBrains Mono; color:var(--yellow)">ConnectionStrings:DefaultConnection</code>. الـ Linux مش بيسمح بـ <code style="font-family:JetBrains Mono; color:var(--yellow)">:</code> في أسماء المتغيرات، فبنستبدلها بـ <code style="font-family:JetBrains Mono; color:var(--yellow)">__</code> — والـ .NET بيفهمها أوتوماتيك.</p>
+  </div>
+
+  <!-- Cleanup section -->
+  <div class="card card-accent-red" style="margin-top:2rem;">
+    <p style="font-size:.92rem; color:var(--muted); margin-bottom:.75rem;"><strong style="color:var(--text);">🧹 نظّف جهازك — أمر الـ Docker Prune</strong></p>
+    <p style="font-size:.88rem; color:var(--muted); margin-bottom:.75rem;">كل مرة بتعمل <code style="font-family:JetBrains Mono; color:var(--green)">docker build</code> بعد تعديل، الـ Layers القديمة بتفضل على الهارد كـ "Dangling Images" — بتاكل مساحة في صمت.</p>
+    <pre class="code-block" style="margin-top:.5rem;">
+docker system prune -a --volumes
+<span class="cm"># -a         → امسح كل الـ Images الميتة مش مربوطة بكانتينر شغّال</span>
+<span class="cm"># --volumes  → امسح الـ Volumes القديمة المهجورة</span>
+<span class="cm"># النتيجة: Total reclaimed space: XX GB</span>
+<span class="cr"># ⚠️ هيمسح الـ Volumes كمان — احرص مش تشغّله على Production</span>
+</pre>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════ -->
+<!-- 7. DOCKER COMPOSE                 -->
+<!-- ══════════════════════════════════ -->
+<section class="section fade-in" id="compose">
+  <h2 class="section-title">
+    <span class="num">٧</span>
+    Docker Compose — السيستم كله بأمر واحد
+  </h2>
+
+  <p style="color:var(--muted); margin-bottom:1.25rem;">
+    لو مشروعك فيه API + قاعدة بيانات + Cache Redis، هتكتب <code style="font-family:JetBrains Mono; color:var(--red)">docker run</code> لكل واحد، وتربط الـ Networks والـ Volumes يدوياً؟ الـ <strong style="color:var(--text)">Docker Compose</strong> بيحل ده بملف YAML واحد.
+  </p>
+
+  <!-- Compose architecture diagram -->
+  <div class="diagram-box">
+    <div class="diagram-title">// diagram — Bridge Network الأوتوماتيكي وسر الـ Service Name كـ DNS</div>
+    <svg class="diag-svg" viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="anet" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#a78bfa"/></marker>
+        <marker id="apub" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#38bdf8"/></marker>
+      </defs>
+
+      <!-- Outer = docker-compose network -->
+      <rect x="10" y="10" width="680" height="230" rx="12" fill="rgba(167,139,250,.04)" stroke="rgba(167,139,250,.3)" stroke-width="1.5" stroke-dasharray="6,3"/>
+      <text x="350" y="30" text-anchor="middle" font-size="10" font-weight="700" fill="#a78bfa" font-family="JetBrains Mono">Bridge Network (أوتوماتيك من Compose)</text>
+      <text x="350" y="46" text-anchor="middle" font-size="8" fill="#64748b" font-family="IBM Plex Sans Arabic">كل الكانتينرات جوا نفس الشبكة — بيتكلموا بالاسم مش بالـ IP</text>
+
+      <!-- Database Service -->
+      <rect x="35" y="65" width="190" height="140" rx="10" class="diag-box-orange"/>
+      <text x="130" y="88" text-anchor="middle" font-size="10" font-weight="700" fill="#fb923c" font-family="JetBrains Mono">database</text>
+      <text x="130" y="104" text-anchor="middle" font-size="8" fill="#64748b" font-family="IBM Plex Sans Arabic">اسم الـ Service = الـ DNS</text>
+      <rect x="52" y="115" width="155" height="30" rx="6" class="diag-box"/>
+      <text x="130" y="134" text-anchor="middle" font-size="9" fill="#e2e8f0" font-family="JetBrains Mono">mssql/server:2022</text>
+      <rect x="52" y="152" width="155" height="40" rx="6" class="diag-box-yellow"/>
+      <text x="130" y="169" text-anchor="middle" font-size="8" fill="#fbbf24" font-family="JetBrains Mono">Volume: db_data</text>
+      <text x="130" y="184" text-anchor="middle" font-size="7" fill="#94a3b8" font-family="IBM Plex Sans Arabic">→ /var/opt/mssql</text>
+
+      <!-- Arrow -->
+      <line x1="365" y1="135" x2="228" y2="135" stroke="#a78bfa" stroke-width="1.5" marker-end="url(#anet)"/>
+      <text x="297" y="127" text-anchor="middle" font-size="8" fill="#a78bfa" font-family="JetBrains Mono">Server=database</text>
+      <text x="297" y="148" text-anchor="middle" font-size="7" fill="#64748b" font-family="IBM Plex Sans Arabic">مش localhost — اسم الـ Service</text>
+
+      <!-- API Service -->
+      <rect x="368" y="65" width="295" height="140" rx="10" class="diag-box-blue"/>
+      <text x="515" y="88" text-anchor="middle" font-size="10" font-weight="700" fill="#38bdf8" font-family="JetBrains Mono">my-api</text>
+      <text x="515" y="104" text-anchor="middle" font-size="8" fill="#64748b" font-family="IBM Plex Sans Arabic">بيتبني من Dockerfile</text>
+      <rect x="385" y="115" width="260" height="30" rx="6" class="diag-box"/>
+      <text x="515" y="134" text-anchor="middle" font-size="9" fill="#e2e8f0" font-family="JetBrains Mono">build: context: ./dotnet-app</text>
+      <rect x="385" y="152" width="125" height="40" rx="6" class="diag-box-orange"/>
+      <text x="447" y="169" text-anchor="middle" font-size="8" fill="#fb923c" font-family="JetBrains Mono">depends_on:</text>
+      <text x="447" y="184" text-anchor="middle" font-size="7" fill="#94a3b8" font-family="IBM Plex Sans Arabic">- database</text>
+      <rect x="518" y="152" width="128" height="40" rx="6" class="diag-box-green"/>
+      <text x="582" y="169" text-anchor="middle" font-size="8" fill="#22d3a0" font-family="JetBrains Mono">ports:</text>
+      <text x="582" y="184" text-anchor="middle" font-size="7" fill="#94a3b8" font-family="JetBrains Mono">5000:8080</text>
+
+      <!-- External traffic -->
+      <line x1="660" y1="135" x2="680" y2="135" stroke="#38bdf8" stroke-width="1.5"/>
+      <text x="672" y="128" text-anchor="middle" font-size="8" fill="#38bdf8" font-family="IBM Plex Sans Arabic">بره</text>
+
+      <!-- db_data volume at bottom -->
+      <rect x="35" y="215" width="190" height="22" rx="5" class="diag-box-yellow"/>
+      <text x="130" y="230" text-anchor="middle" font-size="8" fill="#fbbf24" font-family="JetBrains Mono">volumes: db_data (مستمر)</text>
+    </svg>
+  </div>
+
+  <!-- docker-compose.yml full -->
+  <div class="code-sequence">
+    <div class="code-step">
+      <div class="code-step-label">
+        <span class="step-dot orange">١</span>
+        <span class="label-text">خدمة قاعدة البيانات — SQL Server جاهز</span>
+        <span class="ctx-badge compose">docker-compose.yml</span>
+      </div>
+      <pre class="code-block">
+<span class="ck">version</span>: <span class="cy">'3.8'</span>
+
+<span class="ck">services</span>:
+
+  <span class="co">database</span>:                                  <span class="cm"># الاسم ده = الـ DNS جوه الشبكة</span>
+    <span class="ck">image</span>: mcr.microsoft.com/mssql/server:2022-latest
+    <span class="ck">container_name</span>: mssql_db
+    <span class="ck">ports</span>:
+      - <span class="cy">"1433:1433"</span>
+    <span class="ck">environment</span>:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=YourStrongPassword123!
+    <span class="ck">volumes</span>:
+      - db_data:/var/opt/mssql             <span class="cm"># الداتا محفوظة خارج الكانتينر</span>
+</pre>
+    </div>
+    <div class="code-step">
+      <div class="code-step-label">
+        <span class="step-dot blue">٢</span>
+        <span class="label-text">خدمة الـ API + depends_on + Connection String السحرية</span>
+        <span class="ctx-badge compose">docker-compose.yml</span>
+      </div>
+      <pre class="code-block">
+  <span class="co">my-api</span>:
+    <span class="ck">build</span>:
+      <span class="ck">context</span>: ./dotnet-app             <span class="cm"># فولدر المشروع</span>
+      <span class="ck">dockerfile</span>: Dockerfile            <span class="cm"># الـ Dockerfile جواه</span>
+    <span class="ck">container_name</span>: school_api
+    <span class="ck">ports</span>:
+      - <span class="cy">"5000:8080"</span>
+    <span class="ck">environment</span>:
+      - ConnectionStrings__DefaultConnection=Server=<span class="co">database</span>;Database=SchoolDb;User Id=sa;Password=YourStrongPassword123!;Encrypt=False;
+      <span class="cm">#                                                    ↑</span>
+      <span class="cm">#                                    اسم الـ Service مش localhost!</span>
+    <span class="ck">depends_on</span>:
+      - database                           <span class="cm"># اوعى تقوم غير لما database يقوم الأول</span>
+</pre>
+    </div>
+    <div class="code-step">
+      <div class="code-step-label">
+        <span class="step-dot green">٣</span>
+        <span class="label-text">تعريف الـ Volume المستمر في آخر الملف</span>
+        <span class="ctx-badge compose">docker-compose.yml</span>
+      </div>
+      <pre class="code-block">
+<span class="ck">volumes</span>:
+  db_data:   <span class="cm"># تعريف الـ Volume على مستوى الـ Compose</span>
+             <span class="cm"># الدوكر هيعمله لو مش موجود، وهيبقى مستمر بين الـ Runs</span>
+</pre>
+    </div>
+    <div class="code-step">
+      <div class="code-step-label">
+        <span class="step-dot purple">٤</span>
+        <span class="label-text">أوامر التشغيل والإيقاف</span>
+        <span class="ctx-badge terminal">Terminal</span>
+      </div>
+      <pre class="code-block">
+<span class="cm"># شغّل السيستم كله (مع بناء الـ Images)</span>
+docker compose up --build
+
+<span class="cm"># شغّل في الخلفية</span>
+docker compose up --build -d
+
+<span class="cm"># وقف كل حاجة + امسح الكانتينرات + الشبكات</span>
+docker compose down
+
+<span class="cm"># شوف الـ Logs لخدمة معينة</span>
+docker compose logs my-api
+</pre>
+    </div>
+  </div>
+
+  <div class="quote-box">
+    سر الـ <strong>Bridge Network</strong>: بمجرد <code style="font-family:JetBrains Mono; color:var(--green)">docker compose up</code>، الدوكر بيعمل شبكة افتراضية خاصة وبيضيف كل الكانتينرات فيها. كل كانتينر ممكن يكلم التاني <strong>باسم الـ Service مباشرة</strong> — الدوكر بيترجمه لـ IP تلقائياً. <strong>مش محتاج localhost ولا IP ثابت.</strong>
+  </div>
+
+  <div class="info-box red">
+    <span class="ib-icon">⚠️</span>
+    <p><strong>الكمين الشهير:</strong> لو كتبت <code style="font-family:JetBrains Mono; color:var(--green)">Server=localhost</code> في الـ Connection String جوه الـ Compose، الـ API هتفتش عن الـ DB جوا الكانتينر بتاعها هي — ومش هتلاقيها. الصح هو <code style="font-family:JetBrains Mono; color:var(--yellow)">Server=database</code> — اسم الـ Service بالظبط.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════ -->
+<!-- 8. QUICK REFERENCE               -->
+<!-- ══════════════════════════════════ -->
+<section class="section fade-in" id="quickref">
+  <h2 class="section-title">
+    <span class="num">٨</span>
+    Quick Reference — Cheat Sheet
+  </h2>
+
+  <table class="quick-table">
+    <thead>
+      <tr>
+        <th>الأمر / المفهوم</th>
+        <th>بيعمل إيه؟</th>
+        <th>متى تستخدمه؟</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>.dockerignore</td>
+        <td>يحجب ملفات من الـ COPY</td>
+        <td>قبل ما تكتب سطر في الـ Dockerfile</td>
+      </tr>
+      <tr>
+        <td>FROM image:tag AS name</td>
+        <td>يبدأ Stage جديد بـ Base Image</td>
+        <td>أول سطر في كل Stage</td>
+      </tr>
+      <tr>
+        <td>COPY package*.json ./ + RUN install</td>
+        <td>Layer Caching للـ Dependencies</td>
+        <td>قبل COPY . . دايماً</td>
+      </tr>
+      <tr>
+        <td>COPY --from=build-env /out .</td>
+        <td>ينقل ناتج Stage لـ Stage</td>
+        <td>في الـ Multi-stage Run Stage</td>
+      </tr>
+      <tr>
+        <td>docker build -t name .</td>
+        <td>يبني Image من الـ Dockerfile</td>
+        <td>أول مرة أو بعد تغيير الكود</td>
+      </tr>
+      <tr>
+        <td>docker run -d -p H:C --name n img</td>
+        <td>يشغّل Container من Image</td>
+        <td>كل مرة تحتاج تشغّل التطبيق</td>
+      </tr>
+      <tr>
+        <td>-p 5000:3000</td>
+        <td>Port Mapping HOST:CONTAINER</td>
+        <td>عشان المتصفح يوصل للـ API</td>
+      </tr>
+      <tr>
+        <td>docker volume create name</td>
+        <td>ينشئ Volume مستقل</td>
+        <td>قبل تشغيل أي Container بيكتب داتا</td>
+      </tr>
+      <tr>
+        <td>-v vol:/app/data</td>
+        <td>يربط Volume بمجلد جوه الكانتينر</td>
+        <td>في أمر docker run</td>
+      </tr>
+      <tr>
+        <td>-e KEY=VALUE</td>
+        <td>يحقن Environment Variable</td>
+        <td>لتغيير الإعدادات بدون Build جديدة</td>
+      </tr>
+      <tr>
+        <td>ConnectionStrings__Key</td>
+        <td>: → __ للـ .NET في Linux</td>
+        <td>في الـ Compose env أو docker run -e</td>
+      </tr>
+      <tr>
+        <td>Server=database (في Compose)</td>
+        <td>اسم الـ Service كـ DNS</td>
+        <td>في أي Connection String جوه Compose</td>
+      </tr>
+      <tr>
+        <td>depends_on: - service</td>
+        <td>يأخر قيام Service لحد ما التانية تقوم</td>
+        <td>لما الـ API تحتاج الـ DB يكون جاهز</td>
+      </tr>
+      <tr>
+        <td>docker compose up --build</td>
+        <td>يبني ويشغّل كل السيستم</td>
+        <td>أسرع طريقة لتشغيل المشروع كامل</td>
+      </tr>
+      <tr>
+        <td>docker compose down</td>
+        <td>يوقف ويمسح الكانتينرات والشبكات</td>
+        <td>لما تخلص أو تعمل Cleanup</td>
+      </tr>
+      <tr>
+        <td>docker system prune -a --volumes</td>
+        <td>ينظف كل الـ Images والـ Volumes الميتة</td>
+        <td>أسبوعياً لاسترداد مساحة الهارد</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+</main>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-title">🐳 Docker Workshop — Mohamed Ehab</div>
+    <div class="footer-links">
+      <a href="https://www.linkedin.com/in/mohamed-ehab-63b9a4317" target="_blank" rel="noopener" class="footer-link">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="color:#0a66c2">
+          <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+        </svg>
+        LinkedIn
+      </a>
+      <a href="https://github.com/Mohamed-ehab-mohy" target="_blank" rel="noopener" class="footer-link">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="color:#e2e8f0">
+          <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
+        </svg>
+        GitHub
+      </a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); }
+    });
+  }, { threshold: 0.08 });
+  document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+  // Active nav link on scroll
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('#main-nav a[href^="#"]');
+  const navObserver = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        navLinks.forEach(a => a.classList.remove('active'));
+        const active = document.querySelector(`#main-nav a[href="#${e.target.id}"]`);
+        if (active) {
+          active.classList.add('active');
+          active.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+        }
+      }
+    });
+  }, { rootMargin: '-30% 0px -60% 0px' });
+  sections.forEach(s => navObserver.observe(s));
+</script>
+</body>
+</html>

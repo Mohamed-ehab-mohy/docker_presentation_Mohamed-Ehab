@@ -1,0 +1,10 @@
+services:
+  node-app:
+    build:
+      context: ../node-app
+      dockerfile: ../docker-files/Dockerfile.node
+    container_name: node_api
+    ports:
+      - "5000:3000"
+    environment:
+      - PORT=3000

@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  database:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: mssql_db
+    ports:
+      - "1433:1433"
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=YourStrongPassword123!
+    volumes:
+      - db_data:/var/opt/mssql
+
+  node-app:
+    build:
+      context: ../node-app
+      dockerfile: ../docker-files/Dockerfile.node
+    container_name: node_api
+    ports:
+      - "5000:3000"
+    environment:
+      - PORT=3000
+    depends_on:
+      - database
+
+volumes:
+  db_data:

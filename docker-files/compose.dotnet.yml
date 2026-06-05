@@ -1,0 +1,8 @@
+services:
+  dotnet-app:
+    build:
+      context: ../dotnet-app
+      dockerfile: ../docker-files/Dockerfile.dotnet
+    container_name: dotnet_api
+    ports:
+      - "8080:8080"
